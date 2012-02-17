@@ -16,6 +16,7 @@
 #include <iomanip>		//
 #include <cstring>		//
 #include <cmath>		// sin
+#include <ctime>
 
 #include <ddraw.h>		// direct draw
 
@@ -151,7 +152,7 @@ int WINAPI WinMain ( HINSTANCE hinstance, HINSTANCE hprevinstance, LPSTR lpcmdli
 	winclass.cbWndExtra		= 0;
 	winclass.hInstance		= hinstance;
 	winclass.hIcon			= LoadIcon ( NULL, IDI_APPLICATION );
-	winclass.hCursor		= LoadCursor ( NULL, IDC_ARROW );
+	winclass.hCursor		= LoadCursor ( NULL, IDC_CROSS );
 	winclass.hbrBackground	= NULL;		// GetStockObject ( BLACK_BRUSH );
 	winclass.lpszMenuName	= NULL;		// MAKEINTRESOURCE ( IDR_MENU1 );
 	winclass.lpszClassName	= WINDOW_CLASS_NAME;
@@ -288,6 +289,7 @@ int Game_Init ( void *parms )
 	Gradient ( grad, 9, 0, 255 );
 //	LoadValues ( default_filename, World.p1.x, World.p1.y, World.p2.x, World.p2.y );
 	Welcome ( lpddsprimary );
+
 	// return success
 	return 1;
 
@@ -333,7 +335,7 @@ int Game_Main ( void *parms )
 
 	static ITERATED_FUNCTION whichfunction	=	mandlebrot;
 
-	static BYTE				numits			=	255;
+	static BYTE				numits			=	254;
 	static BOOL				update			=	false;
 	static BOOL				done			=	false;
 	static BOOL				display_stats	=	false;
@@ -419,7 +421,15 @@ int Game_Main ( void *parms )
 							+ ( ( World.Center().y - View.Center().y ) * World.Height() ) / View.Height()
 							)
 							+ World.Center().y;
+			
+			RECT r;
 
+			r.left = p1.x;
+			r.top = p1.y;
+			r.right = p2.x;
+			r.bottom = p2.y;
+
+//			InvertRect( hdc, &r );
 			sprintf ( s, "Mouse Position: (%4d,%4d) c = %16.14lf + %16.14lfi", p2.x, p2.y, zoom.p2.x, zoom.p2.y );
 			TextOut ( hdc, 0, 16*1, s, strlen(s) );
 			if ( KEY_DOWN ( VK_ESCAPE ) )
@@ -689,14 +699,19 @@ int Game_Main ( void *parms )
 		// draw the next frame into the secondary back buffer
 
 		HDC	hdc;
-
-		lpddsprimary->GetDC ( &hdc );
-		sprintf ( s, "Updating" );
+		lpddsprimary->GetDC( &hdc );
+		sprintf ( s, "Updating...");
 		TextOut ( hdc, 0, View.Height()-16, s, strlen(s) );
-		lpddsprimary->ReleaseDC ( hdc );
+		lpddsprimary->ReleaseDC( hdc );
 
 		LDOUBLE a;
 		LDOUBLE b = World.p1.y;
+
+		time_t last;
+		time_t now;
+
+		time(&now);
+		last = now - 1;
 
 		inc.x = (World.p2.x - World.p1.x) / View.Width();
 		inc.y = (World.p2.y - World.p1.y) / View.Height();
@@ -722,11 +737,19 @@ int Game_Main ( void *parms )
 						break;
 				}
 				a += inc.x;
+				if ( last < now )
+				{
+					lpddsprimary->GetDC( &hdc );
+					sprintf ( s, "Updating: %8.5lf%%", 100*LDOUBLE(x+(View.Height()-y)*View.Width())/(View.Width()*View.Height()) );
+					TextOut ( hdc, 0, View.Height()-16, s, strlen(s) );
+					lpddsprimary->ReleaseDC( hdc );
+					last = now;
+				}
+				time(&now);
 			}
 			b += inc.y;
 		}
 		update = false;
-
 		// linear memory
 
 		// unlock secondary buffer
@@ -750,6 +773,84 @@ int Game_Main ( void *parms )
 	return 1;	// return success
 } // end Game_Main
 
+inline ULONG FastFact( const ULONG n )
+{
+	switch (n)
+	{
+	case 2L:
+		return 2L;
+	case 3L:
+		return 6L;
+	case 4L:
+		return 24L;
+	case 5L:
+		return 120L;
+	case 6L:
+		return 720L;
+	case 7L:
+		return 5040L;
+	case 8L:
+		return 40320L;
+	case 9L:
+		return 362880L;
+	case 10L:
+		return 3628800L;
+	case 11L:
+		return 39916800L;
+	case 12L:
+		return 479001600L;
+	default:
+		return 1L;
+	}
+}
+
+inline ULONG NchooseK( const ULONG n, const ULONG k )
+{
+	return (FastFact(n)/FastFact(k))/FastFact(n-k);
+}
+
+
+LDOUBLE QuickPow(LDOUBLE base, ULONG exponent)
+{
+	LDOUBLE a = 1.0;
+	LDOUBLE b = base;
+	ULONG e = exponent;
+	// inv 1:base ˆ exponent = a * b ˆ e and e >= 0
+	while( e > 0 )
+	{
+		// inv 2: base ˆ exponent = a * b ˆ e and e >= 0
+		if( e % 2 != 0 )
+			a = a * b;
+		b = b * b;
+		e = e / 2;
+		// inv 3: base ˆ exponent = a * b ˆ e and e >= 0
+	}// inv 4: base ˆ exponent = a and e == 0
+	return a;
+}
+
+VOID ComplexBinomial( const ULONG power, const LDOUBLE x, const LDOUBLE y, LDOUBLE & realAns, LDOUBLE &imagAns )
+{
+	const ULONG n = power;
+	const ULONG nOver2 = n / 2;
+
+	ULONG twoK, twoKPlus1;
+	LONG minus1 = -1;
+
+	LDOUBLE xsum = 0,
+			ysum = 0;
+
+	for ( ULONG k=0; k <= nOver2; ++k )
+	{
+		twoK = 2*k;
+		twoKPlus1 = twoK + 1;
+		minus1 = -1*minus1;
+		ysum += minus1*NchooseK(n,twoK)*pow(x,twoK)*pow(y,n-twoK);
+		if ( twoKPlus1 <= n )
+			xsum += minus1*NchooseK(n,twoKPlus1)*pow(x,twoKPlus1)*pow(y,n-twoKPlus1);
+	}
+	realAns = xsum;
+	imagAns = ysum;
+}
 
 BYTE Mandlebrot ( const LDOUBLE & a, const LDOUBLE & b, const BYTE & numiterations )
 {
@@ -769,8 +870,27 @@ BYTE Mandlebrot ( const LDOUBLE & a, const LDOUBLE & b, const BYTE & numiteratio
 		if ( x*x + y*y > 4 )
 			return count;
 
-		x = xtemp*xtemp - ytemp*ytemp + a;	// x^2 - y^2 + a
-		y = 2*xtemp*ytemp + b;				// 2xy + b
+//		x = xtemp*xtemp - ytemp*ytemp + a;	// x^2 - y^2 + a
+//		y = 2*xtemp*ytemp + b;				// 2xy + b
+
+//		x = 5*xtemp*ytemp*ytemp*ytemp*ytemp - 10*xtemp*xtemp*xtemp*ytemp*ytemp + xtemp*xtemp*xtemp*xtemp*xtemp + a;
+//		y = ytemp*ytemp*ytemp*ytemp*ytemp - 10*xtemp*xtemp*ytemp*ytemp*ytemp + 5*xtemp*xtemp*xtemp*xtemp*ytemp + b;
+
+//		x = 5*xtemp*QuickPow(ytemp,4) - 10*QuickPow(xtemp,3)*QuickPow(ytemp,2) + QuickPow(xtemp,5) + a;
+//		y = QuickPow(ytemp,5) - 10*QuickPow(xtemp,2)*QuickPow(ytemp,3) + 5*QuickPow(xtemp,4)*ytemp + b;
+//		ComplexBinomial( 5, xtemp, ytemp, x, y );
+//		x += a;
+//		y += b;
+
+		x = ytemp*ytemp*ytemp*ytemp*ytemp*ytemp -
+			15*xtemp*xtemp*ytemp*ytemp*ytemp*ytemp +
+			15*ytemp*ytemp*xtemp*xtemp*xtemp*xtemp -
+			xtemp*xtemp*xtemp*xtemp*xtemp*xtemp +
+			a;
+		y = 6*xtemp*ytemp*ytemp*ytemp*ytemp*ytemp -
+			20*xtemp*xtemp*xtemp*ytemp*ytemp*ytemp +
+			6*xtemp*xtemp*xtemp*xtemp*xtemp*ytemp +
+			b;
 	}
 	if ( x*x + y*y < 4 )
 		return 0;
