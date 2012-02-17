@@ -1,0 +1,68 @@
+{VERSION 4 0 "IBM INTEL NT" "4.0" }
+{USTYLETAB {CSTYLE "Maple Input" -1 0 "Courier" 0 1 255 0 0 1 0 1 0 0 
+1 0 0 0 0 1 }{CSTYLE "2D Math" -1 2 "Times" 0 1 0 0 0 0 0 0 2 0 0 0 0 
+0 0 1 }{CSTYLE "2D Output" 2 20 "" 0 1 0 0 255 1 0 0 0 0 0 0 0 0 0 1 }
+{PSTYLE "Normal" -1 0 1 {CSTYLE "" -1 -1 "Times" 1 12 0 0 0 1 2 2 2 2 
+2 2 1 1 1 1 }1 1 0 0 0 0 1 0 1 0 2 2 0 1 }{PSTYLE "Warning" -1 7 1 
+{CSTYLE "" -1 -1 "Courier" 1 10 0 0 255 1 2 2 2 2 2 1 1 1 3 1 }1 1 0 
+0 0 0 1 0 1 0 2 2 0 1 }{PSTYLE "Maple Output" -1 11 1 {CSTYLE "" -1 
+-1 "Times" 1 12 0 0 0 1 2 2 2 2 2 2 1 1 1 1 }3 3 0 0 0 0 1 0 1 0 2 2 
+0 1 }{PSTYLE "Maple Output" -1 12 1 {CSTYLE "" -1 -1 "Times" 1 12 0 0 
+0 1 2 2 2 2 2 2 1 1 1 1 }1 3 0 0 0 0 1 0 1 0 2 2 0 1 }}
+{SECT 0 {EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 8 "restart;" }}}{EXCHG 
+{PARA 0 "> " 0 "" {MPLTEXT 1 0 13 "with(linalg);" }}{PARA 7 "" 1 "" 
+{TEXT -1 80 "Warning, the protected names norm and trace have been red
+efined and unprotected\n" }}{PARA 12 "" 1 "" {XPPMATH 20 "6#7^r%.Block
+DiagonalG%,GramSchmidtG%,JordanBlockG%)LUdecompG%)QRdecompG%*Wronskian
+G%'addcolG%'addrowG%$adjG%(adjointG%&angleG%(augmentG%(backsubG%%bandG
+%&basisG%'bezoutG%,blockmatrixG%(charmatG%)charpolyG%)choleskyG%$colG%
+'coldimG%)colspaceG%(colspanG%*companionG%'concatG%%condG%)copyintoG%*
+crossprodG%%curlG%)definiteG%(delcolsG%(delrowsG%$detG%%diagG%(diverge
+G%(dotprodG%*eigenvalsG%,eigenvaluesG%-eigenvectorsG%+eigenvectsG%,ent
+ermatrixG%&equalG%,exponentialG%'extendG%,ffgausselimG%*fibonacciG%+fo
+rwardsubG%*frobeniusG%*gausselimG%*gaussjordG%(geneqnsG%*genmatrixG%%g
+radG%)hadamardG%(hermiteG%(hessianG%(hilbertG%+htransposeG%)ihermiteG%
+*indexfuncG%*innerprodG%)intbasisG%(inverseG%'ismithG%*issimilarG%'isz
+eroG%)jacobianG%'jordanG%'kernelG%*laplacianG%*leastsqrsG%)linsolveG%'
+mataddG%'matrixG%&minorG%(minpolyG%'mulcolG%'mulrowG%)multiplyG%%normG
+%*normalizeG%*nullspaceG%'orthogG%*permanentG%&pivotG%*potentialG%+ran
+dmatrixG%+randvectorG%%rankG%(ratformG%$rowG%'rowdimG%)rowspaceG%(rows
+panG%%rrefG%*scalarmulG%-singularvalsG%&smithG%,stackmatrixG%*submatri
+xG%*subvectorG%)sumbasisG%(swapcolG%(swaprowG%*sylvesterG%)toeplitzG%&
+traceG%*transposeG%,vandermondeG%*vecpotentG%(vectdimG%'vectorG%*wrons
+kianG" }}}{EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 20 "T1 := matrix ( 3, \+
+3," }}{PARA 0 "> " 0 "" {MPLTEXT 1 0 9 "[[1,0,0]," }}{PARA 0 "> " 0 "
+" {MPLTEXT 1 0 8 "[0,1,0]," }}{PARA 0 "> " 0 "" {MPLTEXT 1 0 63 "[Worl
+dCenterX - ViewCenterX, WorldCenterX - ViewCenterX,1]]  );" }}{PARA 
+11 "" 1 "" {XPPMATH 20 "6#>%#T1G-%'matrixG6#7%7%\"\"\"\"\"!F+7%F+F*F+7
+%,&%-WorldCenterXGF*%,ViewCenterXG!\"\"F.F*" }}}{EXCHG {PARA 0 "> " 0 
+"" {MPLTEXT 1 0 20 "S1 := matrix ( 3, 3," }}{PARA 0 "> " 0 "" 
+{MPLTEXT 1 0 30 "[[WorldWidth / ViewWidth,0,0]," }}{PARA 0 "> " 0 "" 
+{MPLTEXT 1 0 31 "[0,WorldHeight / ViewHeight,0]," }}{PARA 0 "> " 0 "" 
+{MPLTEXT 1 0 11 "[0,0,1]] );" }}{PARA 11 "" 1 "" {XPPMATH 20 "6#>%#S1G
+-%'matrixG6#7%7%*&%+WorldWidthG\"\"\"%*ViewWidthG!\"\"\"\"!F/7%F/*&%,W
+orldHeightGF,%+ViewHeightGF.F/7%F/F/F," }}}{EXCHG {PARA 0 "> " 0 "" 
+{MPLTEXT 1 0 20 "T2 := matrix ( 3, 3," }}{PARA 0 "> " 0 "" {MPLTEXT 1 
+0 9 "[[1,0,0]," }}{PARA 0 "> " 0 "" {MPLTEXT 1 0 8 "[0,1,0]," }}{PARA 
+0 "> " 0 "" {MPLTEXT 1 0 64 "[WorldCenterX / ViewCenterX, WorldCenterY
+ / ViewCenterY, 1]]  );" }}{PARA 11 "" 1 "" {XPPMATH 20 "6#>%#T2G-%'ma
+trixG6#7%7%\"\"\"\"\"!F+7%F+F*F+7%*&%-WorldCenterXGF*%,ViewCenterXG!\"
+\"*&%-WorldCenterYGF*%,ViewCenterYGF1F*" }}}{EXCHG {PARA 0 "> " 0 "" 
+{MPLTEXT 1 0 29 "P := vector ( 3, [x, y, 1] );" }}{PARA 11 "" 1 "" 
+{XPPMATH 20 "6#>%\"PG-%'vectorG6#7%%\"xG%\"yG\"\"\"" }}}{EXCHG {PARA 
+0 "> " 0 "" {MPLTEXT 1 0 39 "XformMatrix := multiply ( T1, S1, T2 );" 
+}}{PARA 11 "" 1 "" {XPPMATH 20 "6#>%,XformMatrixG-%'matrixG6#7%7%*&%+W
+orldWidthG\"\"\"%*ViewWidthG!\"\"\"\"!F/7%F/*&%,WorldHeightGF,%+ViewHe
+ightGF.F/7%,&*&*&,&%-WorldCenterXGF,%,ViewCenterXGF.F,F+F,F,F-F.F,*&F9
+F,F:F.F,,&*&*&F8F,F2F,F,F3F.F,*&%-WorldCenterYGF,%,ViewCenterYGF.F,F,
+" }}}{EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 42 "XformPoint := multiply \+
+( P, XformMatrix );" }}{PARA 12 "" 1 "" {XPPMATH 20 "6#>%+XformPointG-
+%'vectorG6#7%,(*&*&%\"xG\"\"\"%+WorldWidthGF-F-%*ViewWidthG!\"\"F-*&*&
+,&%-WorldCenterXGF-%,ViewCenterXGF0F-F.F-F-F/F0F-*&F4F-F5F0F-,(*&*&%\"
+yGF-%,WorldHeightGF-F-%+ViewHeightGF0F-*&*&F3F-F;F-F-F<F0F-*&%-WorldCe
+nterYGF-%,ViewCenterYGF0F-F-" }}}{EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 
+0 78 "WorldWidth := (WorldX1 + WorldX2 )/ 2; WorldHeight := (WorldY1 +
+ WorldY2) / 2;" }}{PARA 11 "" 1 "" {XPPMATH 20 "6#>%+WorldWidthG,&%(Wo
+rldX1G#\"\"\"\"\"#*&F'F(%(WorldX2GF(F(" }}}{EXCHG {PARA 0 "> " 0 "" 
+{MPLTEXT 1 0 0 "" }}}}{MARK "8 0 0" 78 }{VIEWOPTS 1 1 0 1 1 1803 1 1 
+1 1 }{PAGENUMBERS 0 1 2 33 1 1 }

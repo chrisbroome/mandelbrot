@@ -1,0 +1,234 @@
+// pcx.cpp: implementation of the pcx class.
+//
+//////////////////////////////////////////////////////////////////////
+
+#include <cstdio>
+#include "pcx.h"
+
+//////////////////////////////////////////////////////////////////////
+// Construction/Destruction
+//////////////////////////////////////////////////////////////////////
+
+pcx::pcx()
+{
+
+}
+
+pcx::~pcx()
+{
+
+}
+
+bool pcx::WriteToFile ( const char * filename, WORD pitch, WORD Width, WORD Height, BYTE Bpp, BYTE NumPlanes, BYTE buffer[], BYTE pal[256*3] )
+{
+	width		= Width;
+	height		= Height;
+	bpp			= Bpp;
+	numplanes	= NumPlanes;
+
+	FILE * fp = fopen ( filename, "wb" );
+	WriteHeader ( fp );
+
+	for ( ULONG i = 0; i < height; ++i )
+	{
+		encLine ( &buffer[i*pitch], width, fp );
+	}
+
+	fwrite ( pal, 256*3, sizeof ( BYTE ), fp );
+	fclose ( fp );
+
+	return true;
+}
+
+bool pcx::EncodeScanLine ( WORD width, LONG & encindex, BYTE * encbuf, BYTE * buffer )
+{
+	BYTE	curByte	= buffer[0],
+			preByte = curByte,
+			count	= 1;
+
+	// get a byte
+	// while current byte equals previous byte and count < 0x3f
+	//		increment count
+	// if the byte > 0xc0, put 0xc0 + count into the buffer
+	// if the count is 1 or 2, just put the byte in the encoded buffer
+	// otherwise
+	for ( LONG i = 0; i < width + width % 2; ++i )
+	{
+		curByte = buffer[i];
+		while ( curByte == preByte && count < 0x3f && i < width + width%2 )
+		{
+			++i;
+			curByte = buffer[i];
+			++count;
+		}
+		if ( count > 2 )
+			--count;
+		if ( curByte < 0xc0 )
+		{
+			if ( count == 1 )
+			{
+				encbuf[encindex] = preByte;
+				++encindex;
+			}
+			else if ( count == 2 )
+			{
+				encbuf[encindex] = encbuf[encindex + 1] = preByte;
+				++encindex; ++encindex;
+			}
+			else
+			{
+				encbuf[encindex]		= 0xc0 + count;
+				encbuf[encindex + 1]	= preByte;
+				++encindex; ++encindex;
+			}
+		}
+		else
+		{
+			encbuf[encindex] = 0xc0 + count;
+			encbuf[encindex + 1] = preByte;
+			++encindex; ++encindex;
+		}
+		preByte = buffer[i];
+		count = 1;
+	}
+	return true;
+}
+
+
+/*
+	PCX file format header
+
+       SIZE in BYTES       DECSRIPTION        DEFINITION
+       1                   Manufacturer       10 == PC-Paintbrush PCX
+       1                   Version            0 == 2.5
+                                              2 == 2.8 with palette info
+                                              3 == 2.8 without palette info
+                                              5 == 3.0 with palette info
+       1                   Encoding           1 == .PCX run-length encoding
+       1                   Bits per pixel     we use 1 for mono images
+       8                   WINDOW             (MinX, MinY)  (MaxX, MaxY)
+       2                   Horizontal Res     Horizontal Resolution
+       2                   Vertical   Res     Vertical   Resolution
+       48 ( 16 * 3 )       ColourMap          R, G, B for each of 16 colours
+       1                   reserved           (this puts in a 0)
+       1                   Num Planes         Number of colour planes, this uses 1
+       2                   Bytes Per line     640 pixels/8 = 80 bytes per line
+       2                   PaletteInfo        How to interpret palette- 1 = Color/BW, 2 = Grayscale (ignored in PB IV/ IV +) 
+       2                   HscreenSize        Horizontal screen size in pixels. New field found only in PB IV/IV Plus 
+       2                   VscreenSize        Vertical screen size in pixels. New field found only in PB IV/IV Plus 
+       54                  Filler             Blank to fill out 128 byte header. Set all bytes to 0 
+*/
+bool pcx::WriteHeader ( FILE * fp )
+{
+	// size_t fwrite( const void *buffer, size_t size, size_t count, FILE *stream );
+	UCHAR	buffer[128] = { 0 };
+	WORD	temp = 0;
+
+	buffer[0] = 10;									// manufacturer
+	buffer[1] = 5;									// version (5 = color)
+	buffer[2] = 1;									// encoding version (1 = RLE)
+	buffer[3] = bpp;								// the number of bits per pixel
+	memcpy ( &buffer[4], &(temp=0), 2 );			// xmin
+	memcpy ( &buffer[6], &(temp=0), 2 );			// ymin
+	memcpy ( &buffer[8], &(temp=width-1), 2 );		// xmax
+	memcpy ( &buffer[10], &(temp=height-1), 2 );	// ymax
+	memcpy ( &buffer[12], &(temp=300), 2 );			// hres
+	memcpy ( &buffer[14], &(temp=300), 2 );			// vres
+	memset ( &buffer[16], 0, 48 );					// colormap
+	buffer[64] = 0;									// reserved (must be 0)
+	buffer[65] = 1;									// number of color planes (use 1 in a 256 color image)
+	memcpy ( &buffer[66], &(temp=width/8), 2 );		// bytes per line
+	memcpy ( &buffer[68], &(temp=1), 2 );			// palette info (1=color/BW, 2=grayscale)
+	memcpy ( &buffer[70], &(temp=width), 2 );		// horizontal screen size
+	memcpy ( &buffer[72], &(temp=height), 2 );		// vertical screen size
+
+	// the rest is padded with zero (array was initialized with zeros, so no operation here)
+
+	// write the header to the file
+	fwrite	( buffer, 128, sizeof(UCHAR), fp );
+	return true;
+}
+
+/*
+	Subroutine for writing an encoded byte pair (or single byte if it doesn't encode) to a file.
+	It returns the count of bytes written, 0 if error
+*/
+int pcx::encput(UCHAR byt, UCHAR cnt, FILE * fid)
+{
+  if (cnt) {
+        if ((cnt == 1) && (0xC0 != (0xC0 & byt)))
+                {
+                if (EOF == putc((int )byt, fid))
+                        return(0);     /* disk write error (probably full) */
+                return(1);
+                }
+        else
+                {
+                if (EOF == putc((int )0xC0 | cnt, fid))
+                        return (0);      /* disk write error */
+                if (EOF == putc((int )byt, fid))
+                        return (0);      /* disk write error */
+                return (2);
+                }
+        }
+   return (0);
+}
+
+
+/*
+	This subroutine encodes one scanline and writes it to a file. It returns number of bytes written into outBuff, 0 if failed.
+	unsigned char *inBuff;    pointer to scanline data
+	int inLen;                length of raw scanline in bytes
+	FILE *fp;                 file to be written to
+*/
+int pcx::encLine(UCHAR * inBuff, WORD inLen, FILE * fp)
+{
+unsigned char thisbyte, lastbyte;
+int srcIndex, i;
+register int total;
+register unsigned char runCount;     /* max single runlength is 63 */
+  total = 0;
+  runCount = 1;
+  lastbyte = inBuff[0];
+
+  WORD buffindex = 0;
+
+/* Find the pixel dimensions of the image by calculating 
+[XSIZE = Xmax - Xmin + 1] and [YSIZE = Ymax - Ymin + 1].  
+Then calculate how many bytes are in a "run" */
+
+  for (srcIndex = 1; srcIndex < inLen; srcIndex++)
+        {
+	  thisbyte = inBuff[++buffindex];
+//        thisbyte = *(++inBuff);
+        if (thisbyte == lastbyte)     /* There is a "run" in the data, encode it */
+                {
+                runCount++;
+                if (runCount == 63)
+                        {
+                        if (! (i = encput(lastbyte, runCount, fp)))
+                                return (0);
+                        total += i;
+                        runCount = 0;
+                        }
+                }
+        else            /* No "run"  -  thisbyte != lastbyte */
+                {
+                if (runCount)
+                        {
+                        if (! (i = encput(lastbyte, runCount, fp)))
+                                return(0);
+                        total += i;
+                        }
+                lastbyte = thisbyte;
+                runCount = 1;
+                }
+        }       /* endloop */
+  if (runCount) /* finish up */
+        {
+        if (! (i = encput(lastbyte, runCount, fp)))
+                return (0);
+        return (total + i);
+        }
+  return (total);
+}

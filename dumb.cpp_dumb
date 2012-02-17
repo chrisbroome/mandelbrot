@@ -1,0 +1,235 @@
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <ctime>
+
+#include "allegro.h"
+#include "types.h"
+
+using namespace std;
+
+const char * default_filename = "mandvals.txt";
+
+void	Welcome		( BITMAP * where );
+BYTE	Mandlebrot	( const LDOUBLE & a, const LDOUBLE & b, const BYTE & numiterations );
+BOOL	LoadValues	( const char * filename, LDOUBLE & amin, LDOUBLE & amax, LDOUBLE & bmin, LDOUBLE & bmax );
+void	SaveValues	( const char * filename, LDOUBLE amin, LDOUBLE amax, LDOUBLE bmin, LDOUBLE bmax );
+
+int main ( void )
+{
+	BYTE			numits = 32;
+	BITMAP			* backbuffer = NULL;
+	BOOL			done = false, update = true, display_stats = true;
+	WORD			zoomspeed = 16;
+	LDOUBLE			amin, amax, bmin, bmax;
+
+	allegro_init ( );
+	install_keyboard ( );
+
+	if ( set_gfx_mode ( GFX_AUTODETECT, 320, 200, 0, 0 ) != 0 )
+	{
+		if ( set_gfx_mode ( GFX_AUTODETECT, 640, 480, 0, 0 ) != 0 )
+		{
+			allegro_message ( "Error setting graphics mode\n%s\n", allegro_error );
+			return 1;
+		}
+	}
+
+	/* allocate the memory buffer */
+	backbuffer = create_bitmap ( SCREEN_W, SCREEN_H );
+	if ( ! backbuffer )
+	{
+		allegro_message ( "Error: %s\n", allegro_error );
+		return 2;
+	}
+
+	if ( ! LoadValues ( default_filename, amin, amax, bmin, bmax ) )
+	{
+		amin = bmin = -2.0;
+		amax = bmax = 2.0;
+	}
+
+	Welcome ( screen );
+    readkey();
+
+	LDOUBLE ainc = (amax-amin) / SCREEN_W;
+	LDOUBLE binc = (bmax-bmin) / SCREEN_H;
+	while ( ! done )
+	{
+		if ( key [ KEY_ENTER ] )
+		{
+			update = true;
+		}
+		if ( key [ KEY_ESC ] )
+		{
+			done = true;
+		}
+		if ( key [ KEY_1 ] )
+		{
+			++numits;
+			update = true;
+		}
+		if ( key [ KEY_TILDE ] )
+		{
+			--numits;
+			update = true;
+		}
+		if ( key [ KEY_S ] )
+		{
+			amin -= ainc*zoomspeed;
+			update = true;
+		}
+		if ( key [ KEY_A ] )
+		{
+			amin += ainc*zoomspeed;
+			update = true;
+		}
+		if ( key [ KEY_G ] )
+		{
+			amax -= ainc*zoomspeed;
+			update = true;
+		}
+		if ( key [ KEY_F ] )
+		{
+			amax += ainc*zoomspeed;
+			update = true;
+		}
+		if ( key [ KEY_E ] )
+		{
+			bmin -= binc*zoomspeed;
+			update = true;
+		}
+		if ( key [ KEY_3 ] )
+		{
+			bmin += binc*zoomspeed;
+			update = true;
+		}
+		if ( key [ KEY_C ] )
+		{
+			bmax -= binc*zoomspeed;
+			update = true;
+		}
+		if ( key [ KEY_D ] )
+		{
+			bmax += binc*zoomspeed;
+			update = true;
+		}
+		if ( key [ KEY_DOWN ] )
+		{
+			bmin -= binc*zoomspeed;
+			bmax -= binc*zoomspeed;
+			update = true;
+		}
+		if ( key [ KEY_UP ] )
+		{
+			bmin += binc*zoomspeed;
+			bmax += binc*zoomspeed;
+			update = true;
+		}
+		if ( key [ KEY_RIGHT ] )
+		{
+			amin -= ainc*zoomspeed;
+			amax -= ainc*zoomspeed;
+			update = true;
+		}
+		if ( key [ KEY_LEFT ] )
+		{
+			amin += ainc*zoomspeed;
+			amax += ainc*zoomspeed;
+			update = true;
+		}
+		if ( key [ KEY_STOP ] )			// zoom in
+		{
+			amin	+=	ainc * zoomspeed;
+			amax	-=	ainc * zoomspeed;
+			bmin	+=	binc * zoomspeed;
+			bmax	-=	binc * zoomspeed;
+			update	=	true;
+		}
+		if ( key [ KEY_COMMA ] )		// zoom out
+		{
+			amin	-=	ainc * zoomspeed;
+			amax	+=	ainc * zoomspeed;
+			bmin	-=	binc * zoomspeed;
+			bmax	+=	binc * zoomspeed;
+			update	=	true;
+		}
+		if ( key [ KEY_BACKSLASH ] )	// save mandlebrot zoom rectangle values
+		{
+			SaveValues ( default_filename, amin, amax, bmin, bmax );
+		}
+		if ( key [ KEY_SPACE ] )
+		{
+			amin = bmin = -2.0;
+			amax = bmax = 2.0;
+			update = true;
+		}
+		if ( key [ KEY_TAB ] )
+		{
+			display_stats ? display_stats = false : display_stats = true;
+			update = true;
+		}
+        if ( key [ KEY_OPENBRACE ] )
+        {
+        	--zoomspeed;
+            while ( key [ KEY_OPENBRACE ] ) { }
+        }
+        if ( key [ KEY_CLOSEBRACE ] )
+        {
+        	++zoomspeed;
+            while ( key [ KEY_CLOSEBRACE ] ) { }
+        }
+		if ( update )
+		{
+/*			if ( display_stats )
+			{
+				textprintf ( backbuffer, font, 0, 0x00, 2, "amin = %f amax = %f", amin, amax );
+				textprintf ( backbuffer, font, 0, 0x08, 2, "bmin = %f bmax = %f", bmin, bmax );
+				textprintf ( backbuffer, font, 0, 0x10, 2, "%d", zoomspeed );
+				textprintf ( backbuffer, font, 0, 0x18, 2, "%d", numits );
+			}*/
+			WORD i = 0;
+			LDOUBLE a;
+			LDOUBLE b = bmin;
+
+			ainc = (amax - amin) / SCREEN_W;
+			binc = (bmax - bmin) / SCREEN_H;
+
+			for ( int y = 0; y < SCREEN_H; ++y )
+			{
+				a = amin;
+				for ( int x = 0; x < SCREEN_W; ++x )
+				{
+					putpixel ( backbuffer, x, y, Mandlebrot ( a, b, numits ) );
+					++i;
+					a += ainc;
+				}
+				b += binc;
+			}
+			i = 0;
+			update = false;
+			blit ( backbuffer, screen, 0, 0, 0, 0, SCREEN_W, SCREEN_H );
+		}
+	}
+	destroy_bitmap ( backbuffer );
+	set_gfx_mode ( GFX_TEXT, 80, 25, 0, 0 );
+	return 0;
+}
+
+/*
+	computes the Mandlebrot Set
+	z(n+1) = z(n)*z(n) + c; // z = a + bi, c = x + yi
+	real(n+1) = a*a - b*b + x;
+	imag(n+1) = 2*a*b + y;
+
+	iteration 1:
+    z(1) = z(0)^2 + c = (z(0)^2) + c;
+    z(2) = z(1)^2 + c = ( (z(0)^2) + c )^2 + c;
+    z(3) = z(2)^2 + c = ( ( (z(0)^2) + c )^2 + c )^2 + c;
+    .
+    .
+    .
+*/
+
+END_OF_MAIN();
+

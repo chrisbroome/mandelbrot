@@ -1,0 +1,60 @@
+/*
+	types.h
+	Copyright 2001 Chris Broome
+	All rights reserved
+*/
+
+#ifndef TYPES_H
+#define TYPES_H
+
+#ifndef UINT
+#define	UINT	unsigned int
+#endif
+
+#ifndef BYTE
+#define	BYTE	unsigned char
+#endif
+
+#ifndef UCHAR
+#define	UCHAR	unsigned char
+#endif
+
+#ifndef ULONG
+#define	ULONG	unsigned long
+#endif
+
+#ifndef	WORD
+#define	WORD	unsigned int
+#endif
+
+#ifndef	DOUBLE
+#define	DOUBLE	double
+#endif
+
+#ifndef	LDOUBLE
+#define	LDOUBLE	long double
+#endif
+
+/*
+enum bool
+{
+	false = 0,
+    true
+};
+*/
+
+#ifndef BOOL
+#define	BOOL	bool
+#endif
+
+template <class T>
+struct Rect
+{
+	T top, left, bottom, right;
+};
+
+template <class T>
+inline T abs ( const T & t ) { return (t > 0 ? t : -t); }
+
+#endif
+
