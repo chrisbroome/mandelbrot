@@ -1,1 +1,4 @@
+# Ignore editor files
 .sublime-*
+*.swp
+*~
