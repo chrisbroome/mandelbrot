@@ -1,24 +1,10 @@
-/*
-	Mandlebrot.cpp - mandlebrot set demo
-	Copyright 2002 Chris Broome
-	All rights reserved
-*/
-
-//	we don't need the more "advanced" features of the Win32 API, so...
-#define WIN32_LEAN_AND_MEAN
-
 // includes ///////////////////////////////////////////////
-
-#include <windows.h>	// include important windows stuff
-
 #include <iostream>		// C++ stuff
 #include <fstream>		//
 #include <iomanip>		//
 #include <cstring>		//
 #include <cmath>		// sin
 #include <ctime>
-
-#include <ddraw.h>		// direct draw
 
 #include "types.h"		// user defined types and expressions
 #include "utilities.h"	// important utilities
@@ -34,6 +20,7 @@ enum ITERATED_FUNCTION
 	julia,
 	newton1
 };
+
 // constants for windows
 const	CHAR	* WINDOW_CLASS_NAME =	"WINXCLASS";		// class name
 const	UINT	SCREEN_BPP			=	8;				// number of bits per pixel (2 to this power gives the number of colors)
@@ -815,16 +802,16 @@ LDOUBLE QuickPow(LDOUBLE base, ULONG exponent)
 	LDOUBLE a = 1.0;
 	LDOUBLE b = base;
 	ULONG e = exponent;
-	// inv 1:base ˆ exponent = a * b ˆ e and e >= 0
+	// inv 1:base Ë† exponent = a * b Ë† e and e >= 0
 	while( e > 0 )
 	{
-		// inv 2: base ˆ exponent = a * b ˆ e and e >= 0
+		// inv 2: base Ë† exponent = a * b Ë† e and e >= 0
 		if( e % 2 != 0 )
 			a = a * b;
 		b = b * b;
 		e = e / 2;
-		// inv 3: base ˆ exponent = a * b ˆ e and e >= 0
-	}// inv 4: base ˆ exponent = a and e == 0
+		// inv 3: base Ë† exponent = a * b Ë† e and e >= 0
+	}// inv 4: base Ë† exponent = a and e == 0
 	return a;
 }
 
