@@ -2,3 +2,8 @@
 .sublime-*
 *.swp
 *~
+.idea/
+
+*.o
+a.out
+mandelbrot

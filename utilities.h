@@ -1,17 +1,10 @@
-/*
-	utilities.h
-	Copyright 2002 Chris Broome
-	All rights reserved
-*/
-
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#include <stdint.h>
 
-#include <windows.h>
+// todo: unstub this
+inline short GetAsyncKeyState(int vKey) {}
 
 const int VK_0 = 0x30;
 const int VK_1 = 0x31;
@@ -51,20 +44,19 @@ const int VK_X = 0x58;
 const int VK_Y = 0x59;
 const int VK_Z = 0x5a;
 
-inline BOOL KEY_DOWN	( int vKey ) { return ( GetAsyncKeyState ( vKey ) & 0x8000 ? true : false ); }
-inline BOOL KEY_UP		( int vKey ) { return ( GetAsyncKeyState ( vKey ) & 0x8000 ? false : true ); }
+inline bool KEY_DOWN( int vKey ) { return ( GetAsyncKeyState ( vKey ) & 0x8000 ? true : false ); }
+inline bool KEY_UP  ( int vKey ) { return ( GetAsyncKeyState ( vKey ) & 0x8000 ? false : true ); }
 
-inline BYTE RED			( COLORREF c )	{ return (BYTE)c; }
-inline BYTE GREEN		( COLORREF c )	{ return (BYTE)((c & 0x0000ff00) >>  8); }
-inline BYTE BLUE		( COLORREF c )	{ return (BYTE)((c & 0x00ff0000) >> 16); }
-
+inline uint8_t RED( COLORREF c ) { return (uint8_t)((c & 0x000000ff) >> 0); }
+inline uint8_t GREEN( COLORREF c ) { return (uint8_t)((c & 0x0000ff00) >> 8); }
+inline uint8_t BLUE( COLORREF c ) { return (uint8_t)((c & 0x00ff0000) >> 16); }
 
 template <typename T>
-Swap ( T & x1, T & x2 )
+Swap( T & x1, T & x2 )
 {
-	T temp = x1;
-	x1 = x2;
-	x2 = temp;
+  T temp = x1;
+  x1 = x2;
+  x2 = temp;
 }
 
 #endif
