@@ -1,6 +1,9 @@
 
 all: mandelbrot
 
+run:
+	./mandelbrot
+
 clean:
 	rm -f mandelbrot *.o
 
