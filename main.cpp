@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <iostream>
 
 unsigned int mandelbrot(const sf::Vector2<double> c, const unsigned int numIterations);
 void updateView(sf::Uint8* pixels, const sf::Rect<double> view, const sf::Vector2u textureSize);
@@ -18,8 +19,10 @@ int main() {
   sf::Vector2<double> viewPosition(-2, -2);
   sf::Vector2<double> viewSize(4, 4);
   sf::Rect<double> view(viewPosition, viewSize);
+  sf::Vector2<double> scaleFactor(view.width / textureSize.x, view.height / textureSize.y);
 
   updateView(pixels, view, textureSize);
+  texture.update(pixels);
 
   // while window is open
   while(window.isOpen()) {
@@ -29,11 +32,32 @@ int main() {
       if (event.type == sf::Event::Closed) {
         window.close();
       }
+      if (event.type == sf::Event::MouseMoved) {
+        const sf::Vector2u mm(event.mouseMove.x, event.mouseMove.y);
+        const sf::Vector2<double> v(mm.x * scaleFactor.x, mm.y * scaleFactor.y);
+        const sf::Vector2<double> vc = v + sf::Vector2<double>(view.left, view.top);
+        std::cout << "Screen: (" << mm.x << "," << mm.y << ") ";
+        std::cout << "View: (" << vc.x << "," << vc.y << ") ";
+        std::cout << std::endl;
+      }
+      if (event.type == sf::Event::MouseButtonPressed)
+      {
+        if (event.mouseButton.button == sf::Mouse::Left)
+        {
+          const sf::Vector2u mm(event.mouseMove.x, event.mouseMove.y);
+          const sf::Vector2<double> v(mm.x * scaleFactor.x, mm.y * scaleFactor.y);
+          const sf::Vector2<double> vc = v + sf::Vector2<double>(view.left, view.top);
+          std::cout << "Screen: (" << mm.x << "," << mm.y << ") ";
+          std::cout << "View: (" << vc.x << "," << vc.y << ") ";
+          std::cout << std::endl;
+          view = sf::Rect<double>(vc, sf::Vector2<double>(view.width, view.height) / 2.0);
+          scaleFactor = sf::Vector2<double>(view.width / textureSize.x, view.height / textureSize.y);
+          updateView(pixels, view, textureSize);
+          texture.update(pixels);
+        }
+      }
     }
     window.clear(sf::Color::White);
-
-    texture.update(pixels);
-
     window.draw(sprite);
     window.display();
   }
