@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <cmath>
 
 template <typename T>
 unsigned int mandelbrot(const sf::Vector2<T> c, const unsigned int numIterations);
@@ -22,8 +23,6 @@ const sf::Vector2<U> translatePointFromTo(const sf::Rect<T> from, const sf::Rect
 template <typename T>
 const sf::Vector2<T> getCenter(const sf::Rect<T> r);
 
-void mouseCoordinates(const sf::Event& event, const sf::Transform& transformFromTextureToView, const sf::FloatRect& view, const sf::Texture& texture);
-
 int main() {
 
   sf::RenderWindow window(sf::VideoMode(640, 480), "Mandelbrot Set Viewer");
@@ -31,14 +30,17 @@ int main() {
   sf::Sprite sprite(texture);
 
   const sf::Vector2u textureSize = texture.getSize();
-  const sf::IntRect textureRect(0, 0, textureSize.x, textureSize.y);
+  const sf::FloatRect textureRect(0, 0, textureSize.x, textureSize.y);
   sf::Uint8 pixels[textureSize.x * textureSize.y * 4];
 
   sf::FloatRect view(-2, -2, 4, 4);
 
-  auto transformFromTextureToView = getTransformFromTo(textureRect, view);
   updateViewTexture(pixels, texture, view);
 
+  sf::Vector2f newTopLeft(-2, -2);
+  sf::Vector2f newBottomRight(2, 2);
+  sf::Vector2f mm(0, 0);
+  auto mousePressed = false;
   // while window is open
   while(window.isOpen()) {
 
@@ -48,43 +50,28 @@ int main() {
         window.close();
       }
       if (event.type == sf::Event::MouseMoved) {
-        const sf::Vector2f mm(event.mouseMove.x, event.mouseMove.y);
-        const auto textureSize = texture.getSize();
-        const auto textureRect = sf::FloatRect(0, 0, textureSize.x, textureSize.y);
-        const auto newRect = transformFromTextureToView.transformRect(textureRect);
-        const auto vc = transformFromTextureToView.transformPoint(sf::Vector2f(mm.x, mm.y));
-        const sf::Vector2f newViewDimensions(view.width / 2, view.height / 2);
-        const auto newPoint = translatePointFromTo(textureRect, view, mm);
-//        mouseCoordinates(event, transformFromTextureToView, view, texture);
-
-//        const sf::Vector2u mm(event.mouseMove.x, event.mouseMove.y);
-//        const auto textureSize = texture.getSize();
-//        const auto textureRect = sf::FloatRect(0, 0, textureSize.x, textureSize.y);
-//        const auto newRect = transformFromTextureToView.transformRect(textureRect);
-//        const auto vc = transformFromTextureToView.transformPoint(sf::Vector2f(mm.x, mm.y));
-//        const sf::Vector2f newViewDimensions(view.width / 2, view.height / 2);
-//        std::cout << "Mouse Center: (" << mm.x << "," << mm.y << ") " << "(" << textureRect.width << "x" << textureRect.height << ") ";
-//        std::cout << "View Center: (" << vc.x << "," << vc.y << ") " << "(" << view.width << "x" << view.height << ") ";
-//        std::cout << "New View Dimensions: (" << vc.x << "," << vc.y << ") " << "(" << newViewDimensions.x << "x" << newViewDimensions.y << ") ";
-//        std::cout << "New Rect: (" << newRect.left << "," << newRect.top << ")" << "(" << newRect.width << "x" << newRect.height << ") ";
-//        std::cout << std::endl;
+        mm = sf::Vector2f(event.mouseMove.x, event.mouseMove.y);
+//        const auto newCenter = translatePointFromTo(textureRect, view, mm);
       }
       if (event.type == sf::Event::MouseButtonPressed) {
+        mousePressed = true;
         if (event.mouseButton.button == sf::Mouse::Left) {
-          mouseCoordinates(event, transformFromTextureToView, view, texture);
-          const sf::Vector2u mm(event.mouseMove.x, event.mouseMove.y);
-          const auto textureSize = texture.getSize();
-          const auto textureRect = sf::FloatRect(0, 0, textureSize.x, textureSize.y);
-          const auto newRect = transformFromTextureToView.transformRect(textureRect);
-          const auto vc = transformFromTextureToView.transformPoint(sf::Vector2f(mm.x, mm.y));
-          const sf::Vector2f newViewDimensions(view.width / 2, view.height / 2);
-          std::cout << "Mouse Center: (" << mm.x << "," << mm.y << ") " << "(" << textureRect.width << "x" << textureRect.height << ") ";
-          std::cout << "View Center: (" << vc.x << "," << vc.y << ") " << "(" << view.width << "x" << view.height << ") ";
-          std::cout << "New View Dimensions: (" << vc.x << "," << vc.y << ") " << "(" << newViewDimensions.x << "x" << newViewDimensions.y << ") ";
-          std::cout << "New Rect: (" << newRect.left << "," << newRect.top << ")" << "(" << newRect.width << "x" << newRect.height << ") ";
-          std::cout << std::endl;
-          view = sf::FloatRect(vc, newViewDimensions);
-          transformFromTextureToView = getTransformFromTo(textureRect, view);
+//          const sf::Vector2f mm(event.mouseMove.x, event.mouseMove.y);
+          newTopLeft = translatePointFromTo(textureRect, view, mm);
+          std::cout << "newTopLeft(" << newTopLeft.x << ", " << newTopLeft.y << ")" << std::endl;
+        }
+      }
+      if (event.type == sf::Event::MouseButtonReleased) {
+        mousePressed = false;
+        if (event.mouseButton.button == sf::Mouse::Left) {
+//          const sf::Vector2f mm(event.mouseMove.x, event.mouseMove.y);
+          newBottomRight = translatePointFromTo(textureRect, view, mm);
+          std::cout << "newBottomRight(" << newBottomRight.x << ", " << newBottomRight.y << ")" << std::endl;
+          const sf::Vector2f newDimensions(fabs(newBottomRight.x - newTopLeft.x), fabs(newBottomRight.y - newTopLeft.y));
+          const sf::FloatRect newView(newTopLeft.x, newTopLeft.y, newDimensions.x, newDimensions.y);
+          const sf::Vector2f scaleFactor(view.width / newView.width, view.height / newView.height);
+          view = newView;
+          std::cout << "view(" << view.left << ", " << view.top << ") (" << view.width << "," << view.height << ") " << std::endl;
           updateViewTexture(pixels, texture, view);
         }
       }
@@ -97,21 +84,14 @@ int main() {
   return 0;
 }
 
-// mm is mouse position in texture coordinates
-// Vector2f r1c = r1.center
-// Vector2f r2c = r2.center
-// Vector2f sf(r1.width / r2.width, r1.height / r2.height)
-// zoom.p1.x =  (sf.x * (mm.x + r1c.x - r2c.x)) + r1c.x;
-// zoom.p1.y = -(sf.y * (mm.y + r1c.y - r2c.y)) + r1c.y;
-
 template <typename T, typename U>
 sf::Transform getTransformFromTo(const sf::Rect<T> from, const sf::Rect<U> to) {
   const sf::Vector2f viewPoint(1.5, 1.5);
-  const sf::Vector2f fromCenter(from.left + from.width / 2, from.top + from.height / 2);
-  const sf::Vector2f scaleFactor(to.width / from.width, -to.height / from.height);
-  const sf::Vector2f toCenter(to.left + to.width / 2, to.top + to.height / 2);
+  const sf::Vector2f fromCenter(getCenter(from));
+  const sf::Vector2f scaleFactor(to.width / from.width, to.height / from.height);
+  const sf::Vector2f toCenter(getCenter(to));
   sf::Transform transform;
-  transform.translate(-fromCenter).scale(scaleFactor);
+  transform.translate(-fromCenter).scale(scaleFactor).translate(toCenter);
   const auto translatedPoint = transform.transformPoint(viewPoint);
   std::cout << "(" << fromCenter.x << "x" << fromCenter.y << ")" << std::endl;
   std::cout << "(" << scaleFactor.x << "x" << scaleFactor.y << ")" << std::endl;
@@ -123,28 +103,25 @@ sf::Transform getTransformFromTo(const sf::Rect<T> from, const sf::Rect<U> to) {
 
 template <typename T, typename U>
 const sf::Vector2<U> translatePointFromTo(const sf::Rect<T> from, const sf::Rect<U> to, const sf::Vector2<T> point) {
-  const sf::Vector2f r1(from.left, from.top);
-  const sf::Vector2f r2(to.left, to.top);
+  const sf::Vector2f f(from.left, from.top);
+  const sf::Vector2f t(to.left, to.top);
 
-  const sf::Vector2f r1c(getCenter(from));
-  const sf::Vector2f r2c(getCenter(to));
+  const sf::Vector2f fc(getCenter(from));
+  const sf::Vector2f tc(getCenter(to));
 
-  const sf::Vector2f scaleFactor(to.width / from.width, -to.height / from.height);
-
+  const sf::Vector2f scaleFactor(to.width / from.width, to.height / from.height);
   const sf::Vector2<U> translatedPoint(
-//     (scaleFactor.x * (point.x + r1.x - r2.x)), // + r2c.x,
-//    -(scaleFactor.y * (point.y + r1.y - r2.y)) // + r2c.y
-     (scaleFactor.x * (point.x + r1.x - r2.x)),// + r2c.x,
-    -(scaleFactor.y * (point.y + r1.y - r2.y)) // + r2c.y
+    (point.x - fc.x) * scaleFactor.x + tc.x,
+    (point.y - fc.y) * scaleFactor.y + tc.y
   );
-  std::cout << "(x,y)" << std::endl;
-  std::cout << "(" << r1.x << "," << r1.y << ")" << "(" << r1c.x << "," << r1c.y << ")" << std::endl;
-  std::cout << "(" << r2.x << "," << r2.y << ")" << "(" << r2c.x << "," << r2c.y << ")" << std::endl;
-  std::cout << "(" << scaleFactor.x << "," << scaleFactor.y << ")" << std::endl;
-  std::cout << "(" << translatedPoint.x << "," << translatedPoint.y << ")" << std::endl;
+  std::cout << "  (x,y)" << std::endl;
+  std::cout << " p(" << point.x << "," << point.y << ")" << std::endl;
+  std::cout << " f(" << f.x << "," << f.y << ")" << " fc(" << fc.x << "," << fc.y << ")" << std::endl;
+  std::cout << " t(" << t.x << "," << t.y << ")" << " tc(" << tc.x << "," << tc.y << ")" << std::endl;
+  std::cout << "sf(" << scaleFactor.x << "," << scaleFactor.y << ")" << std::endl;
+  std::cout << "tp(" << translatedPoint.x << "," << translatedPoint.y << ")" << std::endl;
   return translatedPoint;
 }
-
 
 template <typename T>
 void updateViewTexture(sf::Uint8* pixels, sf::Texture& texture, const sf::Rect<T> view) {
@@ -196,22 +173,8 @@ const sf::Vector2<T> mandelbrotIteration(const sf::Vector2<T> z, const sf::Vecto
 
 template <typename T>
 const sf::Vector2<T> getCenter(const sf::Rect<T> r) {
-  return sf::Vector2f(
+  return sf::Vector2<T>(
     r.left + r.width / 2,
     r.top + r.height / 2
   );
-}
-
-void mouseCoordinates(const sf::Event& event, const sf::Transform& transformFromTextureToView, const sf::FloatRect& view, const sf::Texture& texture) {
-  const sf::Vector2u mm(event.mouseMove.x, event.mouseMove.y);
-  const auto textureSize = texture.getSize();
-  const auto textureRect = sf::FloatRect(0, 0, textureSize.x, textureSize.y);
-  const auto newRect = transformFromTextureToView.transformRect(textureRect);
-  const auto vc = transformFromTextureToView.transformPoint(sf::Vector2f(mm.x, mm.y));
-  const sf::Vector2f newViewDimensions(view.width / 2, view.height / 2);
-  std::cout << "Mouse Center: (" << mm.x << "," << mm.y << ") " << "(" << textureRect.width << "x" << textureRect.height << ") ";
-  std::cout << "View Center: (" << vc.x << "," << vc.y << ") " << "(" << view.width << "x" << view.height << ") ";
-  std::cout << "New View Dimensions: (" << vc.x << "," << vc.y << ") " << "(" << newViewDimensions.x << "x" << newViewDimensions.y << ") ";
-  std::cout << "New Rect: (" << newRect.left << "," << newRect.top << ")" << "(" << newRect.width << "x" << newRect.height << ") ";
-  std::cout << std::endl;
 }
