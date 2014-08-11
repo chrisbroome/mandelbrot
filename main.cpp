@@ -2,6 +2,8 @@
 #include <iostream>
 #include <cmath>
 
+#include "gradient.h"
+
 template <typename T>
 unsigned int mandelbrot(const sf::Vector2<T> c, const unsigned int numIterations);
 
@@ -12,7 +14,7 @@ template <typename T>
 const sf::Vector2<T> mandelbrotIteration(const sf::Vector2<T> z, const sf::Vector2<T> c);
 
 template <typename T>
-void updateViewTexture(sf::Uint8* pixels, sf::Texture& texture, const sf::Rect<T> view);
+void updateViewTexture(sf::Uint8* pixels, sf::Texture& texture, const sf::Rect<T> view, const std::vector<sf::Color>& palette);
 
 template <typename T, typename U>
 sf::Transform getTransformFromTo(const sf::Rect<T> from, const sf::Rect<U> to);
@@ -29,13 +31,39 @@ int main() {
   sf::Texture texture; if (!texture.create(640, 480)) return -1;
   sf::Sprite sprite(texture);
 
+  /*
+    Red     ff   0   0
+    Orange  ff  7f   0
+    Yellow  ff  ff   0
+    Y - G   7f  ff   0
+    Green    0  ff   0
+    Blue     0   0  ff
+    Purple  ff   0  ff
+    Pink    7f   0  7f
+    Black    0   0   0
+  */
+  const auto grad = std::vector<sf::Color> {
+    sf::Color::Red,
+    sf::Color(0xff, 0x7f, 0x00),
+    sf::Color::Yellow,
+    sf::Color(0x7f, 0xff, 0x00),
+    sf::Color::Green,
+    sf::Color::Blue,
+    sf::Color::Magenta,
+    sf::Color(0x7f, 0x00, 0x7f),
+    sf::Color::Black
+  };
+
+  auto palette = Gradient::Linear(grad, 256);
+  palette.at(0) = sf::Color::Black;
+
   const sf::Vector2u textureSize = texture.getSize();
   const sf::FloatRect textureRect(0, 0, textureSize.x, textureSize.y);
   sf::Uint8 pixels[textureSize.x * textureSize.y * 4];
 
   sf::FloatRect view(-2, -2, 4, 4);
 
-  updateViewTexture(pixels, texture, view);
+  updateViewTexture(pixels, texture, view, palette);
 
   sf::Vector2f newTopLeft(-2, -2);
   sf::Vector2f newBottomRight(2, 2);
@@ -72,7 +100,7 @@ int main() {
           const sf::Vector2f scaleFactor(view.width / newView.width, view.height / newView.height);
           view = newView;
           std::cout << "view(" << view.left << ", " << view.top << ") (" << view.width << "," << view.height << ") " << std::endl;
-          updateViewTexture(pixels, texture, view);
+          updateViewTexture(pixels, texture, view, palette);
         }
       }
     }
@@ -124,7 +152,7 @@ const sf::Vector2<U> translatePointFromTo(const sf::Rect<T> from, const sf::Rect
 }
 
 template <typename T>
-void updateViewTexture(sf::Uint8* pixels, sf::Texture& texture, const sf::Rect<T> view) {
+void updateViewTexture(sf::Uint8* pixels, sf::Texture& texture, const sf::Rect<T> view, const std::vector<sf::Color>& palette) {
   const auto textureSize = texture.getSize();
   sf::Vector2u ti;
   sf::Vector2<T> c(view.left, view.top);
@@ -133,7 +161,7 @@ void updateViewTexture(sf::Uint8* pixels, sf::Texture& texture, const sf::Rect<T
   for(ti.y = 0, c.y = view.top; ti.y < textureSize.y; ++ti.y, c.y += cInc.y) {
     for(ti.x = 0, c.x = view.left; ti.x < textureSize.x; ++ti.x, c.x += cInc.x, i += 4) {
       const auto count = mandelbrot(c, 255);
-      const sf::Color color(count*8, count*8, count*8);
+      const sf::Color color = palette.at(count);
       pixels[i] = color.r;
       pixels[i+1] = color.g;
       pixels[i+2] = color.b;
