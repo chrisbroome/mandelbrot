@@ -4,10 +4,14 @@
 #include <vector>
 #include <SFML/graphics.hpp>
 
-class Gradient {
-public:
-  static std::vector<sf::Color> Linear(const sf::Color& c1, const sf::Color& c2, const unsigned int paletteSize);
-  static std::vector<sf::Color> Linear(const std::vector<sf::Color>& colors, const unsigned int numColors);
+namespace mbv {
+  namespace gradient {
+    using sf::Color;
+    using std::ostream;
+    using std::vector;
+    vector<Color> Linear(const Color& c1, const Color& c2, const unsigned int paletteSize);
+    vector<Color> Linear(const vector<Color>& colors, const unsigned int numColors);
+  };
 };
 
 #endif

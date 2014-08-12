@@ -54,7 +54,7 @@ int main() {
     sf::Color::Black
   };
 
-  auto palette = Gradient::Linear(grad, 256);
+  auto palette = mbv::gradient::Linear(grad, 256);
   palette.at(0) = sf::Color::Black;
 
   const sf::Vector2u textureSize = texture.getSize();
