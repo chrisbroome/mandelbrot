@@ -1,7 +1,7 @@
 
 all: mandelbrot
 
-run:
+run: mandelbrot
 	./mandelbrot
 
 clean:
