@@ -61,7 +61,8 @@ int main() {
   const sf::FloatRect textureRect(0, 0, textureSize.x, textureSize.y);
   sf::Uint8 pixels[textureSize.x * textureSize.y * 4];
 
-  sf::FloatRect view(-2, -2, 4, 4);
+  const sf::FloatRect initialView(-2, -2, 4, 4);
+  auto view = initialView;
 
   updateViewTexture(pixels, texture, view, palette);
 
@@ -74,17 +75,21 @@ int main() {
 
     sf::Event event;
     while(window.pollEvent(event)) {
+      if (event.type == sf::Event::KeyPressed) {
+        if (event.key.code == sf::Keyboard::Key::R) {
+          view = initialView;
+          updateViewTexture(pixels, texture, view, palette);
+        }
+      }
       if (event.type == sf::Event::Closed) {
         window.close();
       }
       if (event.type == sf::Event::MouseMoved) {
         mm = sf::Vector2f(event.mouseMove.x, event.mouseMove.y);
-//        const auto newCenter = translatePointFromTo(textureRect, view, mm);
       }
       if (event.type == sf::Event::MouseButtonPressed) {
         mousePressed = true;
         if (event.mouseButton.button == sf::Mouse::Left) {
-//          const sf::Vector2f mm(event.mouseMove.x, event.mouseMove.y);
           newTopLeft = translatePointFromTo(textureRect, view, mm);
           std::cout << "newTopLeft(" << newTopLeft.x << ", " << newTopLeft.y << ")" << std::endl;
         }
@@ -92,7 +97,6 @@ int main() {
       if (event.type == sf::Event::MouseButtonReleased) {
         mousePressed = false;
         if (event.mouseButton.button == sf::Mouse::Left) {
-//          const sf::Vector2f mm(event.mouseMove.x, event.mouseMove.y);
           newBottomRight = translatePointFromTo(textureRect, view, mm);
           std::cout << "newBottomRight(" << newBottomRight.x << ", " << newBottomRight.y << ")" << std::endl;
           const sf::Vector2f newDimensions(fabs(newBottomRight.x - newTopLeft.x), fabs(newBottomRight.y - newTopLeft.y));
