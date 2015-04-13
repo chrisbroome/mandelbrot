@@ -1,22 +1,33 @@
+CXX=g++
+CXXFLAGS=-std=c++11
+TGT=mandelbrot
 
-all: mandelbrot
+SRCS := main
+SRCS += gradient
+SRCS += color-palette
 
-run: mandelbrot
-	./mandelbrot
+OBJS += $(addsuffix .o,$(SRCS))
+
+LIBS := SFML
+LIBS += sfml-system
+LIBS += sfml-window
+LIBS += sfml-graphics
+
+FWK_PATH := /Library/Frameworks
+FWKS := $(addprefix -framework ,$(LIBS))
+
+all: $(TGT)
+
+run: $(TGT)
+	./$(TGT)
 
 clean:
-	rm -f mandelbrot *.o
+	rm -f $(TGT) $(OBJS)
 
-mandelbrot: main.o gradient.o color-palette.o
-	g++ main.o gradient.o color-palette.o -o mandelbrot -F /Library/Frameworks -framework SFML -framework sfml-system -framework sfml-window -framework sfml-graphics
+$(TGT): $(OBJS)
+	$(CXX) $(OBJS) -o $@ -F $(FWK_PATH) $(FWKS)
 
-main.o: main.cpp
-	g++ -std=c++11 -c main.cpp
-
-gradient.o: gradient.h gradient.cpp
-	g++ -std=c++11 -c gradient.cpp
-
-color-palette.o: color-palette.h color-palette.cpp
-	g++ -std=c++11 -c color-palette.cpp
+%.o: %.cpp
+	$(CXX) -o $@ -c $^ $(CXXFLAGS)
 
 .PHONY: all clean run
