@@ -1,33 +1,39 @@
+NAME=mandelbrot
 CXX=g++
 CXXFLAGS=-std=c++11
-TGT=mandelbrot
 
-SRCS := main
-SRCS += gradient
-SRCS += color-palette
+SRCDIR:=src
+OBJDIR:=obj
+BINDIR:=bin
+TGT:=$(BINDIR)/mandelbrot
 
-OBJS += $(addsuffix .o,$(SRCS))
+MODS:=main
+MODS+=gradient
+MODS+=color-palette
 
-LIBS := SFML
-LIBS += sfml-system
-LIBS += sfml-window
-LIBS += sfml-graphics
+SRCS+=$(addprefix $(SRCDIR)/,$(addsuffix .cpp,$(MODS)))
+OBJS+=$(addprefix $(OBJDIR)/,$(addsuffix .o,$(MODS)))
 
-FWK_PATH := /Library/Frameworks
-FWKS := $(addprefix -framework ,$(LIBS))
+LIBS:=SFML
+LIBS+=sfml-system
+LIBS+=sfml-window
+LIBS+=sfml-graphics
+
+FWKDIR:=/Library/Frameworks
+FWKS:=$(addprefix -framework ,$(LIBS))
 
 all: $(TGT)
+
+$(TGT): $(OBJS)
+	$(CXX) $(OBJS) -o $@ -F $(FWKDIR) $(FWKS)
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CXX) -o $@ -c $^ $(CXXFLAGS)
 
 run: $(TGT)
 	./$(TGT)
 
 clean:
 	rm -f $(TGT) $(OBJS)
-
-$(TGT): $(OBJS)
-	$(CXX) $(OBJS) -o $@ -F $(FWK_PATH) $(FWKS)
-
-%.o: %.cpp
-	$(CXX) -o $@ -c $^ $(CXXFLAGS)
 
 .PHONY: all clean run
