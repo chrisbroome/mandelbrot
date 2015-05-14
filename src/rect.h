@@ -4,7 +4,7 @@
 #include "point.h"
 
 template <typename T = int>
-struct Rect {
+struct Rect {
   Point<T> p1;
   Point<T> p2;
   Rect( const Point<T> & p1i, const Point<T> & p2i ) : p1(p1i), p2(p2i) { Init(); }

@@ -5,7 +5,7 @@ template <typename T = int>
 struct Point {
   T x;
   T y;
-  Point(const Point<T> p) : x(p.x), y(p.y) {}
+  Point(const Point<T>& p) : x(p.x), y(p.y) {}
   Point(const T & xi, const T & yi) : x(xi), y(yi) { }
   Point() : x(0), y(0) { }
 
