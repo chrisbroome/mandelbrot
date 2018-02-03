@@ -7,7 +7,7 @@ OBJEXT:=.o
 SRCDIR:=src
 OBJDIR:=obj
 BINDIR:=bin
-TGT:=$(BINDIR)/mandelbrot
+TGT:=$(BINDIR)/$(NAME)
 
 MODS:=main
 MODS+=gradient
@@ -16,18 +16,29 @@ MODS+=color-palette
 SRCS+=$(addprefix $(SRCDIR)/,$(addsuffix $(SRCEXT),$(MODS)))
 OBJS+=$(addprefix $(OBJDIR)/,$(addsuffix $(OBJEXT),$(MODS)))
 
-LIBS:=SFML
 LIBS+=sfml-system
 LIBS+=sfml-window
 LIBS+=sfml-graphics
-
-FWKDIR:=/Library/Frameworks
-FWKS:=$(addprefix -framework ,$(LIBS))
+ifeq ($(OS),Windows_NT)
+else
+  UNAME=$(shell uname)
+	ifeq ($(UNAME),Linux)
+	  CCFLAGS += -D Linux
+    LIBRARIES := $(addprefix -l,$(LIBS))
+	endif
+	ifeq ($(UNAME),Darwin)
+	  CCFLAGS += -D OSX
+		LIBS += SFML
+		FWKDIR := /Library/Frameworks
+		FWKS := $(addprefix -framework ,$(LIBS))
+		LIBRARIES := $(FWKDIR) $(FWKS)
+	endif
+endif
 
 all: $(TGT)
 
 $(TGT): $(OBJS)
-	$(CXX) $(OBJS) -o $@ -F $(FWKDIR) $(FWKS)
+	$(CXX) -o $@ $(OBJS) $(LIBRARIES)
 
 $(OBJDIR)/%$(OBJEXT): $(SRCDIR)/%$(SRCEXT)
 	$(CXX) -o $@ -c $^ $(CXXFLAGS)
