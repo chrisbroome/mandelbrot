@@ -27,9 +27,9 @@ const sf::Vector2<T> getCenter(const sf::Rect<T> r);
 
 int main() {
 
-  sf::RenderWindow window(sf::VideoMode(640, 480), "Mandelbrot Set Viewer");
-  sf::Texture texture; if (!texture.create(640, 480)) return -1;
-  sf::Sprite sprite(texture);
+  sf::RenderWindow window(sf::VideoMode(1024, 768), "Mandelbrot Set Viewer");
+  sf::Texture texture; if (!texture.create(1024, 768)) return -1;
+  auto sprite = sf::Sprite(texture);
 
   /*
     Red     ff   0   0
@@ -61,7 +61,7 @@ int main() {
   const sf::FloatRect textureRect(0, 0, textureSize.x, textureSize.y);
   sf::Uint8 pixels[textureSize.x * textureSize.y * 4];
 
-  const sf::FloatRect initialView(-2, -2, 4, 4);
+  const sf::FloatRect initialView(-2, -1.25, 2.5, 2.5);
   auto view = initialView;
 
   updateViewTexture(pixels, texture, view, palette);
@@ -78,8 +78,35 @@ int main() {
       if (event.type == sf::Event::KeyPressed) {
         if (event.key.code == sf::Keyboard::Key::R) {
           view = initialView;
-          updateViewTexture(pixels, texture, view, palette);
         }
+        const auto step = 4;
+        // move up
+        if (event.key.code == sf::Keyboard::Key::W) {
+          view.top -= view.height / step;
+        }
+        // move down
+        if (event.key.code == sf::Keyboard::Key::S) {
+          view.top += view.height / step;
+        }
+        // move left
+        if (event.key.code == sf::Keyboard::Key::A) {
+          view.left -= view.width / step;
+        }
+        // move right
+        if (event.key.code == sf::Keyboard::Key::D) {
+          view.left += view.width / step;
+        }
+        // zoom in
+        if (event.key.code == sf::Keyboard::Key::Z) {
+          //TODO: work out transforms for this
+          // const auto center = getCenter(view);
+          // const auto t = (view.top - center.y) / 2  - (view.height / 2);
+          // const auto l = view.left + (view.width  / 2);
+          // const auto h = view.height / 2;
+          // const auto w = view.width / 2;
+          // view = sf::FloatRect(l, t, w, h);
+        }
+        updateViewTexture(pixels, texture, view, palette);
       }
       if (event.type == sf::Event::Closed) {
         window.close();
