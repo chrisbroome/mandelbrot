@@ -1,6 +1,6 @@
 #include <vector>
 #include <iostream>
-#include <SFML/graphics.hpp>
+#include <SFML/Graphics.hpp>
 
 #include "gradient.h"
 

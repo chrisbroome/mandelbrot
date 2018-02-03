@@ -2,7 +2,7 @@
 #define COLOR_PALETTE_H
 
 #include <vector>
-#include <SFML/graphics.hpp>
+#include <SFML/Graphics.hpp>
 
 namespace mbv {
 
