@@ -191,7 +191,7 @@ void updateViewTexture(sf::Uint8* pixels, sf::Texture& texture, const sf::Rect<T
   unsigned int i = 0;
   for(ti.y = 0, c.y = view.top; ti.y < textureSize.y; ++ti.y, c.y += cInc.y) {
     for(ti.x = 0, c.x = view.left; ti.x < textureSize.x; ++ti.x, c.x += cInc.x, i += 4) {
-      const auto count = mandelbrot(c, 255);
+      const auto count = mandelbrot(c, palette.size()-1);
       const sf::Color color = palette.at(count);
       pixels[i] = color.r;
       pixels[i+1] = color.g;
