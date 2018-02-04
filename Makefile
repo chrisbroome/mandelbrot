@@ -31,7 +31,7 @@ else
 		LIBS += SFML
 		FWKDIR := /Library/Frameworks
 		FWKS := $(addprefix -framework ,$(LIBS))
-		LIBRARIES := $(FWKDIR) $(FWKS)
+		LIBRARIES := $(FWKS)
 	endif
 endif
 
