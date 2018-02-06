@@ -3,7 +3,9 @@
 *.swp
 *~
 .idea/
+.vscode
 
+# object files
 *.o
 a.out
 mandelbrot
