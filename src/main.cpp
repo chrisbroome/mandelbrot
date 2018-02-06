@@ -39,7 +39,7 @@ int main() {
   palette.at(0) = sf::Color::Black;
 
   const sf::Vector2u textureSize = texture.getSize();
-  const sf::Rect<world_coords_t> world(0, 0, textureSize.x, textureSize.y);
+  const sf::IntRect screen(0, 0, textureSize.x, textureSize.y);
   sf::Uint8 pixels[textureSize.x * textureSize.y * 4];
 
   const sf::Rect<world_coords_t> initialView(-2, -1.25, 2.5, 2.5);
@@ -49,7 +49,7 @@ int main() {
 
   sf::Vector2<world_coords_t> newTopLeft(-2, -2);
   sf::Vector2<world_coords_t> newBottomRight(2, 2);
-  sf::Vector2<world_coords_t> mm(0, 0);
+  sf::Vector2i mm(0, 0);
   auto mousePressed = false;
   // while window is open
   while(window.isOpen()) {
@@ -93,19 +93,19 @@ int main() {
         window.close();
       }
       if (event.type == sf::Event::MouseMoved) {
-        mm = sf::Vector2<world_coords_t>(event.mouseMove.x, event.mouseMove.y);
+        mm = sf::Vector2i(event.mouseMove.x, event.mouseMove.y);
       }
       if (event.type == sf::Event::MouseButtonPressed) {
         mousePressed = true;
         if (event.mouseButton.button == sf::Mouse::Left) {
-          newTopLeft = translatePointFromTo(world, view, mm);
+          newTopLeft = translatePointFromTo(screen, view, mm);
           std::cout << "newTopLeft(" << newTopLeft.x << ", " << newTopLeft.y << ")" << std::endl;
         }
       }
       if (event.type == sf::Event::MouseButtonReleased) {
         mousePressed = false;
         if (event.mouseButton.button == sf::Mouse::Left) {
-          newBottomRight = translatePointFromTo(world, view, mm);
+          newBottomRight = translatePointFromTo(screen, view, mm);
           std::cout << "newBottomRight(" << newBottomRight.x << ", " << newBottomRight.y << ")" << std::endl;
           const sf::Vector2<world_coords_t> newDimensions(fabs(newBottomRight.x - newTopLeft.x), fabs(newBottomRight.y - newTopLeft.y));
           const sf::Rect<world_coords_t> newView(newTopLeft.x, newTopLeft.y, newDimensions.x, newDimensions.y);
