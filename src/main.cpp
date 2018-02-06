@@ -1,9 +1,10 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
-// #include <cmath>
 
 #include "gradient.h"
 #include "transforms.h"
+
+typedef long double world_coords_t;
 
 int main() {
 
@@ -38,17 +39,17 @@ int main() {
   palette.at(0) = sf::Color::Black;
 
   const sf::Vector2u textureSize = texture.getSize();
-  const sf::FloatRect textureRect(0, 0, textureSize.x, textureSize.y);
+  const sf::Rect<world_coords_t> world(0, 0, textureSize.x, textureSize.y);
   sf::Uint8 pixels[textureSize.x * textureSize.y * 4];
 
-  const sf::FloatRect initialView(-2, -1.25, 2.5, 2.5);
+  const sf::Rect<world_coords_t> initialView(-2, -1.25, 2.5, 2.5);
   auto view = initialView;
 
   updateViewTexture(pixels, texture, view, palette);
 
-  sf::Vector2f newTopLeft(-2, -2);
-  sf::Vector2f newBottomRight(2, 2);
-  sf::Vector2f mm(0, 0);
+  sf::Vector2<world_coords_t> newTopLeft(-2, -2);
+  sf::Vector2<world_coords_t> newBottomRight(2, 2);
+  sf::Vector2<world_coords_t> mm(0, 0);
   auto mousePressed = false;
   // while window is open
   while(window.isOpen()) {
@@ -92,23 +93,23 @@ int main() {
         window.close();
       }
       if (event.type == sf::Event::MouseMoved) {
-        mm = sf::Vector2f(event.mouseMove.x, event.mouseMove.y);
+        mm = sf::Vector2<world_coords_t>(event.mouseMove.x, event.mouseMove.y);
       }
       if (event.type == sf::Event::MouseButtonPressed) {
         mousePressed = true;
         if (event.mouseButton.button == sf::Mouse::Left) {
-          newTopLeft = translatePointFromTo(textureRect, view, mm);
+          newTopLeft = translatePointFromTo(world, view, mm);
           std::cout << "newTopLeft(" << newTopLeft.x << ", " << newTopLeft.y << ")" << std::endl;
         }
       }
       if (event.type == sf::Event::MouseButtonReleased) {
         mousePressed = false;
         if (event.mouseButton.button == sf::Mouse::Left) {
-          newBottomRight = translatePointFromTo(textureRect, view, mm);
+          newBottomRight = translatePointFromTo(world, view, mm);
           std::cout << "newBottomRight(" << newBottomRight.x << ", " << newBottomRight.y << ")" << std::endl;
-          const sf::Vector2f newDimensions(fabs(newBottomRight.x - newTopLeft.x), fabs(newBottomRight.y - newTopLeft.y));
-          const sf::FloatRect newView(newTopLeft.x, newTopLeft.y, newDimensions.x, newDimensions.y);
-          const sf::Vector2f scaleFactor(view.width / newView.width, view.height / newView.height);
+          const sf::Vector2<world_coords_t> newDimensions(fabs(newBottomRight.x - newTopLeft.x), fabs(newBottomRight.y - newTopLeft.y));
+          const sf::Rect<world_coords_t> newView(newTopLeft.x, newTopLeft.y, newDimensions.x, newDimensions.y);
+          const sf::Vector2<world_coords_t> scaleFactor(view.width / newView.width, view.height / newView.height);
           view = newView;
           std::cout << "view(" << view.left << ", " << view.top << ") (" << view.width << "," << view.height << ") " << std::endl;
           updateViewTexture(pixels, texture, view, palette);
