@@ -6,6 +6,19 @@
 
 typedef long double world_coords_t;
 
+
+template <typename T>
+std::ostream& pointPrintln(std::ostream& out, const sf::Vector2<T> &p, const std::string& name = "") {
+  return out << name << "(" << p.x << ", " << p.y << ")" << std::endl;
+}
+
+template <typename T>
+std::ostream& rectPrintln(std::ostream& out, const sf::Rect<T> &r, const std::string& name = "") {
+  return out << name << "(" << r.left << ", " << r.top << ") (" << r.width << "," << r.height << ") " << std::endl;
+}
+
+
+
 int main() {
 
   sf::RenderWindow window(sf::VideoMode(1024, 768), "Mandelbrot Set Viewer");
@@ -99,19 +112,20 @@ int main() {
         mousePressed = true;
         if (event.mouseButton.button == sf::Mouse::Left) {
           newTopLeft = translatePointFromTo(screen, view, mm);
-          std::cout << "newTopLeft(" << newTopLeft.x << ", " << newTopLeft.y << ")" << std::endl;
+          pointPrintln(std::cout, newTopLeft, "newTopLeft");
         }
       }
       if (event.type == sf::Event::MouseButtonReleased) {
         mousePressed = false;
         if (event.mouseButton.button == sf::Mouse::Left) {
           newBottomRight = translatePointFromTo(screen, view, mm);
-          std::cout << "newBottomRight(" << newBottomRight.x << ", " << newBottomRight.y << ")" << std::endl;
+          pointPrintln(std::cout, newBottomRight, "newBottomRight");
+
           const sf::Vector2<world_coords_t> newDimensions(fabs(newBottomRight.x - newTopLeft.x), fabs(newBottomRight.y - newTopLeft.y));
           const sf::Rect<world_coords_t> newView(newTopLeft.x, newTopLeft.y, newDimensions.x, newDimensions.y);
           const sf::Vector2<world_coords_t> scaleFactor(view.width / newView.width, view.height / newView.height);
           view = newView;
-          std::cout << "view(" << view.left << ", " << view.top << ") (" << view.width << "," << view.height << ") " << std::endl;
+          rectPrintln(std::cout, view, "view");
           updateViewTexture(pixels, texture, view, palette);
         }
       }
