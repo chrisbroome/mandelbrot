@@ -12,6 +12,7 @@ TGT:=$(BINDIR)/$(NAME)
 MODS:=main
 MODS+=gradient
 MODS+=color-palette
+MODS+=transforms
 
 SRCS+=$(addprefix $(SRCDIR)/,$(addsuffix $(SRCEXT),$(MODS)))
 OBJS+=$(addprefix $(OBJDIR)/,$(addsuffix $(OBJEXT),$(MODS)))
