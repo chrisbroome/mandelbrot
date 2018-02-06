@@ -1,12 +1,21 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <iostream>
+// #include <gmpxx.h>
+#include <mpreal.h>
 
 #include "gradient.h"
 #include "transforms.h"
 
-typedef long double world_coords_t;
+typedef mpfr::mpreal world_coords_t;
 
+template <typename T>
+struct World {
+  using Rect = sf::Rect<T>;
+  using Vector = sf::Vector2<T>;
+  const Rect world;
+  Vector mm;
+};
 
 template <typename T>
 std::ostream& pointPrintln(std::ostream& out, const sf::Vector2<T> &p, const std::string& name = "") {
@@ -17,7 +26,6 @@ template <typename T>
 std::ostream& rectPrintln(std::ostream& out, const sf::Rect<T> &r, const std::string& name = "") {
   return out << name << "(" << r.left << ", " << r.top << ") (" << r.width << "," << r.height << ") " << std::endl;
 }
-
 
 
 int main() {
@@ -148,7 +156,7 @@ int main() {
           newBottomRight = translatePointFromTo(screen, view, mm);
           pointPrintln(std::cout, newBottomRight, "newBottomRight");
 
-          const sf::Vector2<world_coords_t> newDimensions(std::fabs(newBottomRight.x - newTopLeft.x), std::fabs(newBottomRight.y - newTopLeft.y));
+          const sf::Vector2<world_coords_t> newDimensions(abs(newBottomRight.x - newTopLeft.x), abs(newBottomRight.y - newTopLeft.y));
           const sf::Rect<world_coords_t> newView(newTopLeft.x, newTopLeft.y, newDimensions.x, newDimensions.y);
           const sf::Vector2<world_coords_t> scaleFactor(view.width / newView.width, view.height / newView.height);
           view = newView;

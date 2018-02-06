@@ -20,6 +20,9 @@ OBJS+=$(addprefix $(OBJDIR)/,$(addsuffix $(OBJEXT),$(MODS)))
 LIBS+=sfml-system
 LIBS+=sfml-window
 LIBS+=sfml-graphics
+LIBS+=gmpxx
+LIBS+=gmp
+LIBS+=mpfr
 ifeq ($(OS),Windows_NT)
 else
   UNAME=$(shell uname)
