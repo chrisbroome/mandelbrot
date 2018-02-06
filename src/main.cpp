@@ -32,11 +32,11 @@ int main() {
     sf::Color::Blue,
     sf::Color::Magenta,
     sf::Color(0x7f, 0x00, 0x7f),
-    sf::Color::Black
   };
 
   auto palette = mbv::gradient::Linear(grad, 256);
   palette.at(0) = sf::Color::Black;
+  palette.at(palette.size() - 1) = sf::Color::White;
 
   const sf::Vector2u textureSize = texture.getSize();
   const sf::IntRect screen(0, 0, textureSize.x, textureSize.y);
