@@ -14,6 +14,9 @@ template <typename T>
 const sf::Vector2<T> mandelbrotIteration(const sf::Vector2<T> z, const sf::Vector2<T> c);
 
 template <typename T>
+inline bool isInMainCardoid(const sf::Vector2<T>& p);
+
+template <typename T>
 void updateViewTexture(sf::Uint8* pixels, sf::Texture& texture, const sf::Rect<T> view, const std::vector<sf::Color>& palette);
 
 template <typename T, typename U>
@@ -93,12 +96,21 @@ unsigned int mandelbrot(const sf::Vector2<T> c, const unsigned int numIterations
   sf::Vector2<T> z(0, 0);
 
   if (c.x < -2 || c.x > 2 || c.y < -2 || c.y > 2) return 0;
+  if (isInMainCardoid(c)) return 0;
   for (; count < numIterations; ++count)
   {
     if (mandelbrotEscape(z) > 4) return count;
     z = mandelbrotIteration(z, c);
   }
   return mandelbrotEscape(z) < 4 ? 0 : count;
+}
+
+template <typename T>
+inline bool isInMainCardoid(const sf::Vector2<T>& p) {
+  const T xmq = p.x - .25;
+  const T ysq = p.y * p.y;
+  const T q = xmq * xmq + ysq;
+  return q * (q + xmq) < .25 * ysq;
 }
 
 template <typename T>
