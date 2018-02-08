@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <cmath>
 #include <iostream>
 
 #include "gradient.h"
@@ -121,7 +122,7 @@ int main() {
           newBottomRight = translatePointFromTo(screen, view, mm);
           pointPrintln(std::cout, newBottomRight, "newBottomRight");
 
-          const sf::Vector2<world_coords_t> newDimensions(fabs(newBottomRight.x - newTopLeft.x), fabs(newBottomRight.y - newTopLeft.y));
+          const sf::Vector2<world_coords_t> newDimensions(std::fabs(newBottomRight.x - newTopLeft.x), std::fabs(newBottomRight.y - newTopLeft.y));
           const sf::Rect<world_coords_t> newView(newTopLeft.x, newTopLeft.y, newDimensions.x, newDimensions.y);
           const sf::Vector2<world_coords_t> scaleFactor(view.width / newView.width, view.height / newView.height);
           view = newView;
