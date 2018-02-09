@@ -9,6 +9,8 @@ namespace mbv {
     using sf::Color;
     using std::ostream;
     using std::vector;
+    using std::sqrt;
+    using std::log;
 
     template <typename T>
     const Color operator+(const Color& color, const sf::Vector3<T> vector) {
@@ -78,5 +80,14 @@ namespace mbv {
       return palette;
     }
 
+    Color Smooth(const vector<Color>& palette, long double re, long double im, unsigned int i) {
+      static const auto ONE_OVER_LOG2 = 1 / log(2);
+      static const auto gradientScale = 256;
+      static const auto gradientShift = 0;
+      const auto size = sqrt(re * re + im * im);
+      const auto smoothed = log(log(size) * ONE_OVER_LOG2) * ONE_OVER_LOG2;
+      const auto colorI = (int)(sqrt(i + 1 - smoothed) * gradientScale + gradientShift) % palette.size();
+      return palette.at(colorI);
+    }
   };
 };
