@@ -21,9 +21,10 @@ std::ostream& rectPrintln(std::ostream& out, const sf::Rect<T> &r, const std::st
 
 
 int main() {
-
-  sf::RenderWindow window(sf::VideoMode(1024, 768), "Mandelbrot Set Viewer");
-  sf::Texture texture; if (!texture.create(1024, 768)) return -1;
+  const auto width = 1280;
+  const auto height = 960;
+  sf::RenderWindow window(sf::VideoMode(width, height), "Mandelbrot Set Viewer");
+  sf::Texture texture; if (!texture.create(width, height)) return -1;
   auto sprite = sf::Sprite(texture);
 
   /*
@@ -46,11 +47,36 @@ int main() {
     sf::Color::Blue,
     sf::Color::Magenta,
     sf::Color(0x7f, 0x00, 0x7f),
+    sf::Color::Red,
+    sf::Color(0xff, 0x7f, 0x00),
+    sf::Color::Yellow,
+    sf::Color(0x7f, 0xff, 0x00),
+    sf::Color::Green,
+    sf::Color::Blue,
+    sf::Color::Magenta,
+    sf::Color(0x7f, 0x00, 0x7f),
+    sf::Color::Red,
+    sf::Color(0xff, 0x7f, 0x00),
+    sf::Color::Yellow,
+    sf::Color(0x7f, 0xff, 0x00),
+    sf::Color::Green,
+    sf::Color::Blue,
+    sf::Color::Magenta,
+    sf::Color(0x7f, 0x00, 0x7f),
+    sf::Color::Red,
+    sf::Color(0xff, 0x7f, 0x00),
+    sf::Color::Yellow,
+    sf::Color(0x7f, 0xff, 0x00),
+    sf::Color::Green,
+    sf::Color::Blue,
+    sf::Color::Magenta,
+    sf::Color(0x7f, 0x00, 0x7f),
   };
 
-  auto palette = mbv::gradient::Linear(grad, 256);
-  palette.at(0) = sf::Color::Black;
-  palette.at(palette.size() - 1) = sf::Color::White;
+  const auto maxIterations = 1024;
+  auto palette = mbv::gradient::Linear(grad, maxIterations);
+  // palette.at(0) = sf::Color::Black;
+  palette.at(palette.size() - 1) = sf::Color::Black;
 
   const sf::Vector2u textureSize = texture.getSize();
   const sf::IntRect screen(0, 0, textureSize.x, textureSize.y);
