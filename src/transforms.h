@@ -76,8 +76,9 @@ void updateViewTexture(sf::Uint8* pixels, sf::Texture& texture, const sf::Rect<T
   sf::Vector2<T> c(view.left, view.top);
   const sf::Vector2<T> cInc(view.width / textureSize.x, view.height / textureSize.y);
   unsigned int i = 0;
+  static const auto pixelSize = 4;
   for(ti.y = 0, c.y = view.top; ti.y < textureSize.y; ++ti.y, c.y += cInc.y) {
-    for(ti.x = 0, c.x = view.left; ti.x < textureSize.x; ++ti.x, c.x += cInc.x, i += 4) {
+    for(ti.x = 0, c.x = view.left; ti.x < textureSize.x; ++ti.x, c.x += cInc.x, i += pixelSize) {
       const auto count = mandelbrot(c, palette.size()-1);
       const sf::Color color = palette.at(count);
       pixels[i] = color.r;
@@ -90,19 +91,16 @@ void updateViewTexture(sf::Uint8* pixels, sf::Texture& texture, const sf::Rect<T
 }
 
 template <typename T>
-unsigned int mandelbrot(const sf::Vector2<T> c, const unsigned int numIterations)
-{
+unsigned int mandelbrot(const sf::Vector2<T> c, const unsigned int numIterations) {
+  if (c.x < -2 || c.x > 2 || c.y < -2 || c.y > 2) return numIterations;
+  if (isInMainCardoid(c)) return numIterations;
+  auto z = sf::Vector2<T>(0, 0);
   unsigned int count = 0;
-  sf::Vector2<T> z(0, 0);
-
-  if (c.x < -2 || c.x > 2 || c.y < -2 || c.y > 2) return 0;
-  if (isInMainCardoid(c)) return 0;
-  for (; count < numIterations; ++count)
-  {
-    if (mandelbrotEscape(z) > 4) return count;
+  for (; count < numIterations; ++count) {
     z = mandelbrotIteration(z, c);
+    if (mandelbrotEscape(z) > 4) return count;
   }
-  return mandelbrotEscape(z) < 4 ? 0 : count;
+  return count;
 }
 
 template <typename T>
@@ -114,12 +112,12 @@ inline bool isInMainCardoid(const sf::Vector2<T>& p) {
 }
 
 template <typename T>
-const T mandelbrotEscape(const sf::Vector2<T> z) {
+inline const T mandelbrotEscape(const sf::Vector2<T> z) {
   return z.x*z.x + z.y*z.y;
 }
 
 template <typename T>
-const sf::Vector2<T> mandelbrotIteration(const sf::Vector2<T> z, const sf::Vector2<T> c) {
+inline const sf::Vector2<T> mandelbrotIteration(const sf::Vector2<T> z, const sf::Vector2<T> c) {
   return sf::Vector2<T>(
     z.x*z.x - z.y*z.y + c.x,
     2 * z.x*z.y + c.y
@@ -127,7 +125,7 @@ const sf::Vector2<T> mandelbrotIteration(const sf::Vector2<T> z, const sf::Vecto
 }
 
 template <typename T>
-const sf::Vector2<T> getCenter(const sf::Rect<T> r) {
+inline const sf::Vector2<T> getCenter(const sf::Rect<T> r) {
   return sf::Vector2<T>(
     r.left + r.width / 2,
     r.top + r.height / 2
