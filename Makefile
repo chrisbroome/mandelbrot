@@ -17,22 +17,22 @@ MODS+=transforms
 SRCS+=$(addprefix $(SRCDIR)/,$(addsuffix $(SRCEXT),$(MODS)))
 OBJS+=$(addprefix $(OBJDIR)/,$(addsuffix $(OBJEXT),$(MODS)))
 
+LIBS+=sfml-graphics
 LIBS+=sfml-system
 LIBS+=sfml-window
-LIBS+=sfml-graphics
 ifeq ($(OS),Windows_NT)
 else
   UNAME=$(shell uname)
 	ifeq ($(UNAME),Linux)
-	  CCFLAGS += -D Linux
+	  CXXFLAGS += -D Linux
     LIBRARIES := $(addprefix -l,$(LIBS))
 	endif
 	ifeq ($(UNAME),Darwin)
-	  CCFLAGS += -D OSX
+	  CXXFLAGS += -D OSX
 		LIBS += SFML
 		FWKDIR := /Library/Frameworks
 		FWKS := $(addprefix -framework ,$(LIBS))
-		LIBRARIES := $(FWKS)
+		LIBRARIES := $(FWKS) -F $(FWKDIR)
 	endif
 endif
 
