@@ -9,3 +9,4 @@
 *.o
 a.out
 mandelbrot
+build/
