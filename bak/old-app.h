@@ -10,6 +10,7 @@ public:
   int Init(void* parms = null);
   int Shutdown(void* parms = null);
   int Main(void* parms = null);
+
 private:
   AppParams* params;
 };

@@ -3,11 +3,10 @@
 
 #include "point.h"
 
-template <typename T = int>
-struct Rect {
+template <typename T = int> struct Rect {
   Point<T> p1;
   Point<T> p2;
-  Rect( const Point<T> & p1i, const Point<T> & p2i ) : p1(p1i), p2(p2i) { Init(); }
+  Rect(const Point<T>& p1i, const Point<T>& p2i) : p1(p1i), p2(p2i) { Init(); }
   Rect() { Init(); }
 
   inline T Width() const { return p2.x - p1.x; }
@@ -18,25 +17,17 @@ struct Rect {
   inline Point<T> Dimensions() const { return p2.Sub(p1); }
   inline Point<T> HalfDimensions() const { return Dimensions().Div(Point(2, 2)); }
 
-  inline Point<T> ScaleFactorFor(Rect<T> rect) const {
-    return Dimensions().Div(rec.Dimensions());
-  }
+  inline Point<T> ScaleFactorFor(Rect<T> rect) const { return Dimensions().Div(rec.Dimensions()); }
 
-  void Normalize ()
-  {
-    if ( p1.x > p2.x )
-      Swap ( p1.x, p2.x );
-    if ( p1.y > p2.y )
-      Swap ( p1.y, p2.y );
+  void Normalize() {
+    if (p1.x > p2.x) Swap(p1.x, p2.x);
+    if (p1.y > p2.y) Swap(p1.y, p2.y);
   }
 
 protected:
-
-  void Init()
-  {
+  void Init() {
     // Normalize ( );
   }
-
 };
 
 #endif

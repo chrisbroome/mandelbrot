@@ -1,6 +1,8 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
+#include <cstdint>
+
 struct Color {
   union {
     struct {
@@ -10,7 +12,7 @@ struct Color {
       uint8_t a;
     };
     int32_t rgba;
-  }
+  };
 };
 
 #endif

@@ -7,24 +7,21 @@
 
 typedef long double world_coords_t;
 
-
 template <typename T>
-std::ostream& pointPrintln(std::ostream& out, const sf::Vector2<T> &p, const std::string& name = "") {
+std::ostream& pointPrintln(std::ostream& out, const sf::Vector2<T>& p, const std::string& name = "") {
   return out << name << "(" << p.x << ", " << p.y << ")" << std::endl;
 }
 
-template <typename T>
-std::ostream& rectPrintln(std::ostream& out, const sf::Rect<T> &r, const std::string& name = "") {
+template <typename T> std::ostream& rectPrintln(std::ostream& out, const sf::Rect<T>& r, const std::string& name = "") {
   return out << name << "(" << r.left << ", " << r.top << ") (" << r.width << "," << r.height << ") " << std::endl;
 }
-
-
 
 int main() {
   const auto width = 1280;
   const auto height = 960;
   sf::RenderWindow window(sf::VideoMode(width, height), "Mandelbrot Set Viewer");
-  sf::Texture texture; if (!texture.create(width, height)) return -1;
+  sf::Texture texture;
+  if (!texture.create(width, height)) return -1;
   auto sprite = sf::Sprite(texture);
 
   /*
@@ -38,39 +35,23 @@ int main() {
     Pink    7f   0  7f
     Black    0   0   0
   */
-  const auto grad = std::vector<sf::Color> {
-    sf::Color::Red,
-    sf::Color(0xff, 0x7f, 0x00),
-    sf::Color::Yellow,
-    sf::Color(0x7f, 0xff, 0x00),
-    sf::Color::Green,
-    sf::Color::Blue,
-    sf::Color::Magenta,
-    sf::Color(0x7f, 0x00, 0x7f),
-    sf::Color::Red,
-    sf::Color(0xff, 0x7f, 0x00),
-    sf::Color::Yellow,
-    sf::Color(0x7f, 0xff, 0x00),
-    sf::Color::Green,
-    sf::Color::Blue,
-    sf::Color::Magenta,
-    sf::Color(0x7f, 0x00, 0x7f),
-    sf::Color::Red,
-    sf::Color(0xff, 0x7f, 0x00),
-    sf::Color::Yellow,
-    sf::Color(0x7f, 0xff, 0x00),
-    sf::Color::Green,
-    sf::Color::Blue,
-    sf::Color::Magenta,
-    sf::Color(0x7f, 0x00, 0x7f),
-    sf::Color::Red,
-    sf::Color(0xff, 0x7f, 0x00),
-    sf::Color::Yellow,
-    sf::Color(0x7f, 0xff, 0x00),
-    sf::Color::Green,
-    sf::Color::Blue,
-    sf::Color::Magenta,
-    sf::Color(0x7f, 0x00, 0x7f),
+  const auto grad = std::vector<sf::Color>{
+      sf::Color::Red,     sf::Color(0xff, 0x7f, 0x00),
+      sf::Color::Yellow,  sf::Color(0x7f, 0xff, 0x00),
+      sf::Color::Green,   sf::Color::Blue,
+      sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
+      sf::Color::Red,     sf::Color(0xff, 0x7f, 0x00),
+      sf::Color::Yellow,  sf::Color(0x7f, 0xff, 0x00),
+      sf::Color::Green,   sf::Color::Blue,
+      sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
+      sf::Color::Red,     sf::Color(0xff, 0x7f, 0x00),
+      sf::Color::Yellow,  sf::Color(0x7f, 0xff, 0x00),
+      sf::Color::Green,   sf::Color::Blue,
+      sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
+      sf::Color::Red,     sf::Color(0xff, 0x7f, 0x00),
+      sf::Color::Yellow,  sf::Color(0x7f, 0xff, 0x00),
+      sf::Color::Green,   sf::Color::Blue,
+      sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
   };
 
   const auto maxIterations = 1024;
@@ -92,10 +73,10 @@ int main() {
   sf::Vector2i mm(0, 0);
   auto mousePressed = false;
   // while window is open
-  while(window.isOpen()) {
+  while (window.isOpen()) {
 
     sf::Event event;
-    while(window.pollEvent(event)) {
+    while (window.pollEvent(event)) {
       if (event.type == sf::Event::KeyPressed) {
         if (event.key.code == sf::Keyboard::Key::R) {
           view = initialView;
@@ -119,7 +100,7 @@ int main() {
         }
         // zoom in
         if (event.key.code == sf::Keyboard::Key::Z) {
-          //TODO: work out transforms for this
+          // TODO: work out transforms for this
           // const auto center = getCenter(view);
           // const auto t = (view.top - center.y) / 2  - (view.height / 2);
           // const auto l = view.left + (view.width  / 2);
@@ -148,7 +129,8 @@ int main() {
           newBottomRight = translatePointFromTo(screen, view, mm);
           pointPrintln(std::cout, newBottomRight, "newBottomRight");
 
-          const sf::Vector2<world_coords_t> newDimensions(std::fabs(newBottomRight.x - newTopLeft.x), std::fabs(newBottomRight.y - newTopLeft.y));
+          const sf::Vector2<world_coords_t> newDimensions(std::fabs(newBottomRight.x - newTopLeft.x),
+                                                          std::fabs(newBottomRight.y - newTopLeft.y));
           const sf::Rect<world_coords_t> newView(newTopLeft.x, newTopLeft.y, newDimensions.x, newDimensions.y);
           const sf::Vector2<world_coords_t> scaleFactor(view.width / newView.width, view.height / newView.height);
           view = newView;
@@ -164,4 +146,3 @@ int main() {
 
   return 0;
 }
-
