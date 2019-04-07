@@ -79,6 +79,10 @@ int main() {
 
     sf::Event event;
     while (window.pollEvent(event)) {
+      if (event.type == sf::Event::Resized) {
+        std::cout << "New dimensions: (" << event.size.width << "," << event.size.height << ")" << std::endl;
+        std::cout << "TODO: implement window resizing" << std::endl;
+      }
       if (event.type == sf::Event::KeyPressed) {
         if (event.key.code == sf::Keyboard::Key::R) {
           view = initialView;
