@@ -1,4 +1,5 @@
 #include <cmath>
+#include <memory>
 #include <iostream>
 
 #include "SFML/Graphics.hpp"
@@ -62,12 +63,12 @@ int main() {
 
   const sf::Vector2u textureSize = texture.getSize();
   const sf::IntRect screen(0, 0, textureSize.x, textureSize.y);
-  auto pixels = new sf::Uint8[textureSize.x * textureSize.y * 4];
+  auto pixels = std::make_unique<sf::Uint8[]>(textureSize.x * textureSize.y * 4);
 
   const sf::Rect<world_coords_t> initialView(-2, -1.25, 2.5, 2.5);
   auto view = initialView;
 
-  updateViewTexture(pixels, texture, view, palette);
+  updateViewTexture(pixels.get(), texture, view, palette);
 
   sf::Vector2<world_coords_t> newTopLeft(-2, -2);
   sf::Vector2<world_coords_t> newBottomRight(2, 2);
@@ -109,7 +110,7 @@ int main() {
           // const auto w = view.width / 2;
           // view = sf::FloatRect(l, t, w, h);
         }
-        updateViewTexture(pixels, texture, view, palette);
+        updateViewTexture(pixels.get(), texture, view, palette);
       }
       if (event.type == sf::Event::Closed) {
         window.close();
@@ -136,7 +137,7 @@ int main() {
           const sf::Vector2<world_coords_t> scaleFactor(view.width / newView.width, view.height / newView.height);
           view = newView;
           rectPrintln(std::cout, view, "view");
-          updateViewTexture(pixels, texture, view, palette);
+          updateViewTexture(pixels.get(), texture, view, palette);
         }
       }
     }
@@ -145,6 +146,5 @@ int main() {
     window.display();
   }
 
-  delete[] pixels;
   return 0;
 }

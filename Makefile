@@ -1,6 +1,6 @@
 NAME=mandelbrot
 CXX=g++
-CXXFLAGS+=-std=c++11 -Wall -Wextra
+CXXFLAGS+=-std=c++14 -Wall -Wextra -Werror -pedantic
 
 SRCEXT:=.cpp
 OBJEXT:=.o
