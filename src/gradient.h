@@ -1,8 +1,10 @@
+#pragma once
 #ifndef GRADIENT_H
 #define GRADIENT_H
 
-#include <SFML/Graphics.hpp>
 #include <vector>
+
+#include "SFML/Graphics.hpp"
 
 namespace mbv {
 namespace gradient {

@@ -1,8 +1,10 @@
+#pragma once
 #ifndef COLOR_PALETTE_H
 #define COLOR_PALETTE_H
 
-#include <SFML/Graphics.hpp>
 #include <vector>
+
+#include "SFML/Graphics.hpp"
 
 namespace mbv {
 

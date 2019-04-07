@@ -1,24 +1,22 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.13)
 
-project("mandelbrot")
+project(mandelbrot)
 
-add_executable(mandelbrot
-  src/color-palette.cpp
-  src/gradient.cpp
-  src/main.cpp
-)
+set (CMAKE_CXX_STANDARD 11)
 
-set(FWKDIR /Library/Frameworks)
-set(LIBS
-  SFML
-  sfml-system
-  sfml-window
-  sfml-graphics
-)
+file(TO_CMAKE_PATH "${PROJECT_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
+if(EXISTS "${LOC_PATH}")
+    message(FATAL_ERROR "You cannot build in a source directory (or any directory with a CMakeLists.txt file). Please make a build subdirectory. Feel free to remove CMakeCache.txt and CMakeFiles.")
+endif()
 
-foreach(lib ${LIBS})
-  set(FWKS "${FWKS} -framework ${lib}")
-endforeach()
+#find_package(SFML 2.5 COMPONENTS system graphics audio window REQUIRED)
+#find_library(SFML SFML)
+#find_library(sfml-system sfml-system)
+#find_library(sfml-window sfml-window)
+#find_library(sfml-graphics sfml-graphics)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -F ${FWKDIR} ${FWKS}")
+#message("SFML Include dir is ${SFML_INCLUDE_DIR}")
+#include_directories(${SFML_INCLUDE_DIR})
+
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -F ${FWKDIR} ${FWKS}")
+add_subdirectory(src)

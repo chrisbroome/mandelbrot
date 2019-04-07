@@ -1,5 +1,6 @@
-#include <SFML/Graphics.hpp>
 #include <vector>
+
+#include "SFML/Graphics.hpp"
 
 #include "color-palette.h"
 

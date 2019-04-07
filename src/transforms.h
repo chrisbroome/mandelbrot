@@ -1,8 +1,10 @@
+#pragma once
 #ifndef TRANSFORMS_H
 #define TRANSFORMS_H
 
-#include <SFML/Graphics.hpp>
 #include <iostream>
+
+#include "SFML/Graphics.hpp"
 
 template <typename T> unsigned int mandelbrot(const sf::Vector2<T> c, const unsigned int numIterations);
 

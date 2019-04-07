@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 
-#include <SFML/Graphics.hpp>
+#include "SFML/Graphics.hpp"
 
 #include "gradient.h"
 
@@ -55,7 +55,7 @@ vector<Color> Linear(const vector<Color>& colors, const unsigned int numColors) 
   if (n == 0) return vector<Color>(0);
   const auto numGrads = n - 1;
 
-  if (numColors == 1) return (vector<Color>){colors[n / 2]};
+  if (numColors == 1) return vector<Color>{colors[n / 2]};
 
   const auto paletteSegmentSize = numColors / numGrads;
 

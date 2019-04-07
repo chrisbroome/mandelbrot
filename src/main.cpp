@@ -1,6 +1,7 @@
-#include <SFML/Graphics.hpp>
 #include <cmath>
 #include <iostream>
+
+#include "SFML/Graphics.hpp"
 
 #include "gradient.h"
 #include "transforms.h"
@@ -61,7 +62,7 @@ int main() {
 
   const sf::Vector2u textureSize = texture.getSize();
   const sf::IntRect screen(0, 0, textureSize.x, textureSize.y);
-  sf::Uint8 pixels[textureSize.x * textureSize.y * 4];
+  auto pixels = new sf::Uint8[textureSize.x * textureSize.y * 4];
 
   const sf::Rect<world_coords_t> initialView(-2, -1.25, 2.5, 2.5);
   auto view = initialView;
@@ -144,5 +145,6 @@ int main() {
     window.display();
   }
 
+  delete[] pixels;
   return 0;
 }
