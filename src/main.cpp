@@ -73,9 +73,15 @@ int main() {
   sf::Vector2<world_coords_t> newTopLeft(-2, -2);
   sf::Vector2<world_coords_t> newBottomRight(2, 2);
   sf::Vector2i mm(0, 0);
+  sf::Vector2f dragStart(0, 0);
+  sf::Vector2f dragEnd(0, 0);
+  sf::RectangleShape dragRectangle(sf::Vector2f(0, 0));
+  // blended blue color
+  dragRectangle.setFillColor(sf::Color(0x80, 0x80, 0xff, 0x80));
   auto mousePressed = false;
   // while window is open
-  while (window.isOpen()) {
+  auto done = false;
+  while (!done) {
 
     sf::Event event;
     while (window.pollEvent(event)) {
@@ -114,17 +120,22 @@ int main() {
           // const auto w = view.width / 2;
           // view = sf::FloatRect(l, t, w, h);
         }
+        if (event.key.code == sf::Keyboard::Escape) {
+          done = true;
+        }
         updateViewTexture(pixels.get(), texture, view, palette);
       }
       if (event.type == sf::Event::Closed) {
-        window.close();
+        done = true;
       }
       if (event.type == sf::Event::MouseMoved) {
         mm = sf::Vector2i(event.mouseMove.x, event.mouseMove.y);
+        dragEnd = sf::Vector2f(mm.x, mm.y);
       }
       if (event.type == sf::Event::MouseButtonPressed) {
         mousePressed = true;
         if (event.mouseButton.button == sf::Mouse::Left) {
+          dragStart = dragEnd = sf::Vector2f(event.mouseButton.x, event.mouseButton.y);
           newTopLeft = translatePointFromTo(screen, view, mm);
           pointPrintln(std::cout, newTopLeft, "newTopLeft");
         }
@@ -133,6 +144,7 @@ int main() {
         mousePressed = false;
         if (event.mouseButton.button == sf::Mouse::Left) {
           newBottomRight = translatePointFromTo(screen, view, mm);
+          dragEnd = sf::Vector2f(event.mouseButton.x, event.mouseButton.y);
           pointPrintln(std::cout, newBottomRight, "newBottomRight");
 
           const sf::Vector2<world_coords_t> newDimensions(std::fabs(newBottomRight.x - newTopLeft.x),
@@ -147,8 +159,16 @@ int main() {
     }
     window.clear(sf::Color::White);
     window.draw(sprite);
+    if (mousePressed) {
+      dragRectangle.setPosition(dragStart);
+      dragRectangle.setSize(dragEnd - dragStart);
+      window.draw(dragRectangle);
+    } else {
+      dragRectangle.setSize(sf::Vector2f(0, 0));
+    }
     window.display();
   }
 
+  window.close();
   return 0;
 }
