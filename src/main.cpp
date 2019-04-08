@@ -147,9 +147,12 @@ int main() {
           dragEnd = sf::Vector2f(event.mouseButton.x, event.mouseButton.y);
           pointPrintln(std::cout, newBottomRight, "newBottomRight");
 
+          const auto x = std::min(newTopLeft.x, newBottomRight.x);
+          const auto y = std::min(newTopLeft.y, newBottomRight.y);
+
           const sf::Vector2<world_coords_t> newDimensions(std::fabs(newBottomRight.x - newTopLeft.x),
                                                           std::fabs(newBottomRight.y - newTopLeft.y));
-          const sf::Rect<world_coords_t> newView(newTopLeft.x, newTopLeft.y, newDimensions.x, newDimensions.y);
+          const sf::Rect<world_coords_t> newView(x, y, newDimensions.x, newDimensions.y);
           const sf::Vector2<world_coords_t> scaleFactor(view.width / newView.width, view.height / newView.height);
           view = newView;
           rectPrintln(std::cout, view, "view");
