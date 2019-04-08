@@ -64,7 +64,7 @@ const sf::Vector2<U> translatePointFromTo(const sf::Rect<T> from, const sf::Rect
 }
 
 template <typename T>
-void updateViewTexture(sf::Uint8* pixels, sf::Texture& texture, const sf::Rect<T> view,
+void updateViewTexture(sf::Image& pixels, sf::Texture& texture, const sf::Rect<T> view,
                        const std::vector<sf::Color>& palette) {
   const auto textureSize = texture.getSize();
   sf::Vector2u ti;
@@ -75,11 +75,7 @@ void updateViewTexture(sf::Uint8* pixels, sf::Texture& texture, const sf::Rect<T
   for (ti.y = 0, c.y = view.top; ti.y < textureSize.y; ++ti.y, c.y += cInc.y) {
     for (ti.x = 0, c.x = view.left; ti.x < textureSize.x; ++ti.x, c.x += cInc.x, i += pixelSize) {
       const auto count = mandelbrot(c, palette.size() - 1);
-      const sf::Color color = palette.at(count);
-      pixels[i] = color.r;
-      pixels[i + 1] = color.g;
-      pixels[i + 2] = color.b;
-      pixels[i + 3] = color.a;
+      pixels.setPixel(ti.x, ti.y, palette.at(count));
     }
   }
   texture.update(pixels);

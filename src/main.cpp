@@ -63,12 +63,13 @@ int main() {
 
   const sf::Vector2u textureSize = texture.getSize();
   const sf::IntRect screen(0, 0, textureSize.x, textureSize.y);
-  auto pixels = std::make_unique<sf::Uint8[]>(textureSize.x * textureSize.y * 4);
+  sf::Image pixels;
+  pixels.create(textureSize.x, textureSize.y);
 
   const sf::Rect<world_coords_t> initialView(-2, -1.25, 2.5, 2.5);
   auto view = initialView;
 
-  updateViewTexture(pixels.get(), texture, view, palette);
+  updateViewTexture(pixels, texture, view, palette);
 
   sf::Vector2<world_coords_t> newTopLeft(-2, -2);
   sf::Vector2<world_coords_t> newBottomRight(2, 2);
@@ -123,7 +124,7 @@ int main() {
         if (event.key.code == sf::Keyboard::Escape) {
           done = true;
         }
-        updateViewTexture(pixels.get(), texture, view, palette);
+        updateViewTexture(pixels, texture, view, palette);
       }
       if (event.type == sf::Event::Closed) {
         done = true;
@@ -156,7 +157,7 @@ int main() {
           const sf::Vector2<world_coords_t> scaleFactor(view.width / newView.width, view.height / newView.height);
           view = newView;
           rectPrintln(std::cout, view, "view");
-          updateViewTexture(pixels.get(), texture, view, palette);
+          updateViewTexture(pixels, texture, view, palette);
         }
       }
     }
