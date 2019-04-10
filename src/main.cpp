@@ -9,23 +9,17 @@
 
 typedef long double world_coords_t;
 
-template <typename T>
+template<typename T>
 std::ostream& pointPrintln(std::ostream& out, const sf::Vector2<T>& p, const std::string& name = "") {
   return out << name << "(" << p.x << ", " << p.y << ")" << std::endl;
 }
 
-template <typename T> std::ostream& rectPrintln(std::ostream& out, const sf::Rect<T>& r, const std::string& name = "") {
+template<typename T>
+std::ostream& rectPrintln(std::ostream& out, const sf::Rect<T>& r, const std::string& name = "") {
   return out << name << "(" << r.left << ", " << r.top << ") (" << r.width << "," << r.height << ") " << std::endl;
 }
 
-int main() {
-  const auto width = 1280;
-  const auto height = 960;
-  sf::RenderWindow window(sf::VideoMode(width, height), "Mandelbrot Set Viewer");
-  sf::Texture texture;
-  if (!texture.create(width, height)) return -1;
-  auto sprite = sf::Sprite(texture);
-
+std::vector<sf::Color> loadPalette(const unsigned int maxIterations) {
   /*
     Red     ff   0   0
     Orange  ff  7f   0
@@ -38,44 +32,69 @@ int main() {
     Black    0   0   0
   */
   const auto grad = std::vector<sf::Color>{
-      sf::Color::Red,     sf::Color(0xff, 0x7f, 0x00),
-      sf::Color::Yellow,  sf::Color(0x7f, 0xff, 0x00),
-      sf::Color::Green,   sf::Color::Blue,
-      sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
-      sf::Color::Red,     sf::Color(0xff, 0x7f, 0x00),
-      sf::Color::Yellow,  sf::Color(0x7f, 0xff, 0x00),
-      sf::Color::Green,   sf::Color::Blue,
-      sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
-      sf::Color::Red,     sf::Color(0xff, 0x7f, 0x00),
-      sf::Color::Yellow,  sf::Color(0x7f, 0xff, 0x00),
-      sf::Color::Green,   sf::Color::Blue,
-      sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
-      sf::Color::Red,     sf::Color(0xff, 0x7f, 0x00),
-      sf::Color::Yellow,  sf::Color(0x7f, 0xff, 0x00),
-      sf::Color::Green,   sf::Color::Blue,
-      sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
+    sf::Color::Red, sf::Color(0xff, 0x7f, 0x00),
+    sf::Color::Yellow, sf::Color(0x7f, 0xff, 0x00),
+    sf::Color::Green, sf::Color::Blue,
+    sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
+    sf::Color::Red, sf::Color(0xff, 0x7f, 0x00),
+    sf::Color::Yellow, sf::Color(0x7f, 0xff, 0x00),
+    sf::Color::Green, sf::Color::Blue,
+    sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
+    sf::Color::Red, sf::Color(0xff, 0x7f, 0x00),
+    sf::Color::Yellow, sf::Color(0x7f, 0xff, 0x00),
+    sf::Color::Green, sf::Color::Blue,
+    sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
+    sf::Color::Red, sf::Color(0xff, 0x7f, 0x00),
+    sf::Color::Yellow, sf::Color(0x7f, 0xff, 0x00),
+    sf::Color::Green, sf::Color::Blue,
+    sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
+    sf::Color::Red, sf::Color(0xff, 0x7f, 0x00),
+    sf::Color::Yellow, sf::Color(0x7f, 0xff, 0x00),
+    sf::Color::Green, sf::Color::Blue,
+    sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
+    sf::Color::Red, sf::Color(0xff, 0x7f, 0x00),
+    sf::Color::Yellow, sf::Color(0x7f, 0xff, 0x00),
+    sf::Color::Green, sf::Color::Blue,
+    sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
+    sf::Color::Red, sf::Color(0xff, 0x7f, 0x00),
+    sf::Color::Yellow, sf::Color(0x7f, 0xff, 0x00),
+    sf::Color::Green, sf::Color::Blue,
+    sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
+    sf::Color::Red, sf::Color(0xff, 0x7f, 0x00),
+    sf::Color::Yellow, sf::Color(0x7f, 0xff, 0x00),
+    sf::Color::Green, sf::Color::Blue,
+    sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
   };
 
-  const auto maxIterations = 1024;
-  auto palette = mbv::gradient::Linear(grad, maxIterations);
+  return mbv::gradient::Linear(grad, maxIterations);
+}
+
+int main() {
+  const auto width = 1280;
+  const auto height = 960;
+  sf::RenderWindow window(sf::VideoMode(width, height), "Mandelbrot Set Viewer");
+  auto maxIterations = 1024 * 2;
+  auto palette = loadPalette(maxIterations);
   // palette.at(0) = sf::Color::Black;
   palette.at(palette.size() - 1) = sf::Color::Black;
 
-  const sf::Vector2u textureSize = texture.getSize();
-  const sf::IntRect screen(0, 0, textureSize.x, textureSize.y);
-  sf::Image pixels;
-  pixels.create(textureSize.x, textureSize.y);
+  auto texture = std::make_unique<sf::Texture>();
+  if (!texture->create(width, height)) return -1;
+  auto sprite = std::make_unique<sf::Sprite>(*texture);
+  const sf::Vector2u textureSize = texture->getSize();
+  sf::IntRect screen(0, 0, textureSize.x, textureSize.y);
+  auto pixels = std::make_unique<sf::Image>();
+  pixels->create(texture->getSize().x, texture->getSize().y);
 
   const sf::Rect<world_coords_t> initialView(-2, -1.25, 2.5, 2.5);
   auto view = initialView;
 
-  updateViewTexture(pixels, texture, view, palette);
+  updateViewTexture(*pixels, *texture, view, palette);
 
   sf::Vector2<world_coords_t> newTopLeft(-2, -2);
   sf::Vector2<world_coords_t> newBottomRight(2, 2);
-  sf::Vector2i mm(0, 0);
-  sf::Vector2f dragStart(0, 0);
-  sf::Vector2f dragEnd(0, 0);
+  sf::Vector2i dragStart(0, 0);
+  sf::Vector2i dragEnd(0, 0);
   sf::RectangleShape dragRectangle(sf::Vector2f(0, 0));
   // blended blue color
   dragRectangle.setFillColor(sf::Color(0x80, 0x80, 0xff, 0x80));
@@ -83,12 +102,34 @@ int main() {
   // while window is open
   auto done = false;
   while (!done) {
-
     sf::Event event;
     while (window.pollEvent(event)) {
       if (event.type == sf::Event::Resized) {
-        std::cout << "New dimensions: (" << event.size.width << "," << event.size.height << ")" << std::endl;
-        std::cout << "TODO: implement window resizing" << std::endl;
+        const auto s = event.size;
+        // update the view to the new size of the window
+        sf::FloatRect visibleArea(0, 0, s.width, s.height);
+        window.setView(sf::View(visibleArea));
+
+        auto tempTexture = std::make_unique<sf::Texture>();
+        if (!tempTexture->create(s.width, s.height)) {
+          done = true;
+          std::cerr << "Error creating new texture with dimensions: (" << s.width << "," << s.height << ")"
+                    << std::endl;
+        } else {
+          auto tempPixels = std::make_unique<sf::Image>();
+          tempPixels->create(s.width, s.height);
+          auto tempSprite = std::make_unique<sf::Sprite>(*tempTexture);
+          std::cerr << "pixels size: " << pixels->getSize().x << "," << pixels->getSize().y << std::endl;
+          std::cerr << "texture size: " << texture->getSize().x << "," << texture->getSize().y << std::endl;
+          pixels.swap(tempPixels);
+          texture.swap(tempTexture);
+          sprite.swap(tempSprite);
+          std::cerr << "pixels size: " << pixels->getSize().x << "," << pixels->getSize().y << std::endl;
+          std::cerr << "texture size: " << texture->getSize().x << "," << texture->getSize().y << std::endl;
+          screen.width = s.width;
+          screen.height = s.height;
+          updateViewTexture(*pixels, *texture, view, palette);
+        }
       }
       if (event.type == sf::Event::KeyPressed) {
         if (event.key.code == sf::Keyboard::Key::R) {
@@ -124,48 +165,48 @@ int main() {
         if (event.key.code == sf::Keyboard::Escape) {
           done = true;
         }
-        updateViewTexture(pixels, texture, view, palette);
+        updateViewTexture(*pixels, *texture, view, palette);
       }
       if (event.type == sf::Event::Closed) {
         done = true;
       }
       if (event.type == sf::Event::MouseMoved) {
-        mm = sf::Vector2i(event.mouseMove.x, event.mouseMove.y);
-        dragEnd = sf::Vector2f(mm.x, mm.y);
+        dragEnd = sf::Vector2i(event.mouseMove.x, event.mouseMove.y);
       }
       if (event.type == sf::Event::MouseButtonPressed) {
         mousePressed = true;
         if (event.mouseButton.button == sf::Mouse::Left) {
-          dragStart = dragEnd = sf::Vector2f(event.mouseButton.x, event.mouseButton.y);
-          newTopLeft = translatePointFromTo(screen, view, mm);
+          dragStart = dragEnd = sf::Vector2i(event.mouseButton.x, event.mouseButton.y);
+          newTopLeft = translatePointFromTo(screen, view, dragStart);
           pointPrintln(std::cout, newTopLeft, "newTopLeft");
         }
       }
       if (event.type == sf::Event::MouseButtonReleased) {
         mousePressed = false;
         if (event.mouseButton.button == sf::Mouse::Left) {
-          newBottomRight = translatePointFromTo(screen, view, mm);
-          dragEnd = sf::Vector2f(event.mouseButton.x, event.mouseButton.y);
+          dragEnd = sf::Vector2i(event.mouseButton.x, event.mouseButton.y);
+          newBottomRight = translatePointFromTo(screen, view, dragEnd);
           pointPrintln(std::cout, newBottomRight, "newBottomRight");
 
           const auto x = std::min(newTopLeft.x, newBottomRight.x);
           const auto y = std::min(newTopLeft.y, newBottomRight.y);
 
-          const sf::Vector2<world_coords_t> newDimensions(std::fabs(newBottomRight.x - newTopLeft.x),
-                                                          std::fabs(newBottomRight.y - newTopLeft.y));
+          const sf::Vector2<world_coords_t> newDimensions(
+            std::fabs(newBottomRight.x - newTopLeft.x),
+            std::fabs(newBottomRight.y - newTopLeft.y));
           const sf::Rect<world_coords_t> newView(x, y, newDimensions.x, newDimensions.y);
           const sf::Vector2<world_coords_t> scaleFactor(view.width / newView.width, view.height / newView.height);
           view = newView;
           rectPrintln(std::cout, view, "view");
-          updateViewTexture(pixels, texture, view, palette);
+          updateViewTexture(*pixels, *texture, view, palette);
         }
       }
     }
     window.clear(sf::Color::White);
-    window.draw(sprite);
+    window.draw(*sprite);
     if (mousePressed) {
-      dragRectangle.setPosition(dragStart);
-      dragRectangle.setSize(dragEnd - dragStart);
+      dragRectangle.setPosition(sf::Vector2f(dragStart));
+      dragRectangle.setSize(sf::Vector2f(dragEnd - dragStart));
       window.draw(dragRectangle);
     } else {
       dragRectangle.setSize(sf::Vector2f(0, 0));
