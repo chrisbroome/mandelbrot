@@ -1,4 +1,5 @@
 #include <cmath>
+#include <exception>
 #include <memory>
 #include <iostream>
 
@@ -69,6 +70,61 @@ std::vector<sf::Color> loadPalette(const unsigned int maxIterations) {
   return mbv::gradient::Linear(grad, maxIterations);
 }
 
+class TextureCreationFailure : public std::exception {
+private:
+  unsigned int width;
+  unsigned int height;
+public:
+  TextureCreationFailure(unsigned int width, unsigned int height) : std::exception()
+  , width(width)
+  , height(height) {}
+
+  const char* what() const noexcept override {
+    return "Error creating texture";
+  }
+
+  unsigned int Width() const {
+    return width;
+  }
+
+  unsigned int Height() const {
+    return height;
+  }
+};
+
+class Gui {
+  public:
+    Gui(unsigned int width, unsigned int height) {
+      texture = std::make_unique<sf::Texture>();
+      if (!texture->create(width, height)) throw TextureCreationFailure(width, height);
+      sprite = std::make_unique<sf::Sprite>(*texture);
+      const sf::Vector2u textureSize = texture->getSize();
+      sf::IntRect screen(0, 0, textureSize.x, textureSize.y);
+      pixels = std::make_unique<sf::Image>();
+      pixels->create(texture->getSize().x, texture->getSize().y);
+    }
+
+    template<typename T>
+    void updateView(const sf::Rect<T> view, const std::vector<sf::Color>& palette) {
+      updateViewTexture(*pixels, *texture, view, palette);
+    }
+
+    void swap(Gui& other) {
+      pixels.swap(other.pixels);
+      texture.swap(other.texture);
+      sprite.swap(other.sprite);
+    }
+
+    void draw(sf::RenderWindow& window) {
+      window.draw(*sprite);
+    }
+
+  private:
+    std::unique_ptr<sf::Texture> texture;
+    std::unique_ptr<sf::Sprite> sprite;
+    std::unique_ptr<sf::Image> pixels;
+};
+
 int main() {
   const auto width = 1280;
   const auto height = 960;
@@ -78,18 +134,13 @@ int main() {
   // palette.at(0) = sf::Color::Black;
   palette.at(palette.size() - 1) = sf::Color::Black;
 
-  auto texture = std::make_unique<sf::Texture>();
-  if (!texture->create(width, height)) return -1;
-  auto sprite = std::make_unique<sf::Sprite>(*texture);
-  const sf::Vector2u textureSize = texture->getSize();
-  sf::IntRect screen(0, 0, textureSize.x, textureSize.y);
-  auto pixels = std::make_unique<sf::Image>();
-  pixels->create(texture->getSize().x, texture->getSize().y);
+  Gui gui(width, height);
+  sf::IntRect screen(0, 0, width, height);
 
   const sf::Rect<world_coords_t> initialView(-2, -1.25, 2.5, 2.5);
   auto view = initialView;
 
-  updateViewTexture(*pixels, *texture, view, palette);
+  gui.updateView(view, palette);
 
   sf::Vector2<world_coords_t> newTopLeft(-2, -2);
   sf::Vector2<world_coords_t> newBottomRight(2, 2);
@@ -110,26 +161,11 @@ int main() {
         sf::FloatRect visibleArea(0, 0, s.width, s.height);
         window.setView(sf::View(visibleArea));
 
-        auto tempTexture = std::make_unique<sf::Texture>();
-        if (!tempTexture->create(s.width, s.height)) {
-          done = true;
-          std::cerr << "Error creating new texture with dimensions: (" << s.width << "," << s.height << ")"
-                    << std::endl;
-        } else {
-          auto tempPixels = std::make_unique<sf::Image>();
-          tempPixels->create(s.width, s.height);
-          auto tempSprite = std::make_unique<sf::Sprite>(*tempTexture);
-          std::cerr << "pixels size: " << pixels->getSize().x << "," << pixels->getSize().y << std::endl;
-          std::cerr << "texture size: " << texture->getSize().x << "," << texture->getSize().y << std::endl;
-          pixels.swap(tempPixels);
-          texture.swap(tempTexture);
-          sprite.swap(tempSprite);
-          std::cerr << "pixels size: " << pixels->getSize().x << "," << pixels->getSize().y << std::endl;
-          std::cerr << "texture size: " << texture->getSize().x << "," << texture->getSize().y << std::endl;
-          screen.width = s.width;
-          screen.height = s.height;
-          updateViewTexture(*pixels, *texture, view, palette);
-        }
+        Gui tempGui(s.width, s.height);
+        gui.swap(tempGui);
+        screen.width = s.width;
+        screen.height = s.height;
+        gui.updateView(view, palette);
       }
       if (event.type == sf::Event::KeyPressed) {
         if (event.key.code == sf::Keyboard::Key::R) {
@@ -165,7 +201,7 @@ int main() {
         if (event.key.code == sf::Keyboard::Escape) {
           done = true;
         }
-        updateViewTexture(*pixels, *texture, view, palette);
+        gui.updateView(view, palette);
       }
       if (event.type == sf::Event::Closed) {
         done = true;
@@ -198,12 +234,12 @@ int main() {
           const sf::Vector2<world_coords_t> scaleFactor(view.width / newView.width, view.height / newView.height);
           view = newView;
           rectPrintln(std::cout, view, "view");
-          updateViewTexture(*pixels, *texture, view, palette);
+          gui.updateView(view, palette);
         }
       }
     }
     window.clear(sf::Color::White);
-    window.draw(*sprite);
+    gui.draw(window);
     if (mousePressed) {
       dragRectangle.setPosition(sf::Vector2f(dragStart));
       dragRectangle.setSize(sf::Vector2f(dragEnd - dragStart));
