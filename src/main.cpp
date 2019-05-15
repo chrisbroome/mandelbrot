@@ -129,121 +129,117 @@ class Gui {
     std::unique_ptr<sf::Image> pixels;
 };
 
-int main() {
-  const auto width = 1280;
-  const auto height = 960;
-  sf::RenderWindow window(sf::VideoMode(width, height), "Mandelbrot Set Viewer");
-  auto maxIterations = 1024 * 2;
-  auto palette = loadPalette(maxIterations);
-  // palette.at(0) = sf::Color::Black;
-  palette.at(palette.size() - 1) = sf::Color::Black;
 
-  Gui gui(width, height);
-  sf::IntRect screen(0, 0, width, height);
+static sf::Rect<world_coords_t> const initialView(-2, -1.25, 2.5, 2.5);
 
-  const sf::Rect<world_coords_t> initialView(-2, -1.25, 2.5, 2.5);
-  auto view = initialView;
+class App {
+public:
+  App(unsigned int width, unsigned int height, unsigned int maxIterations)
+  : window(sf::VideoMode(width, height), "Mandelbrot Set Viewer")
+  , palette(loadPalette(maxIterations))
+  , gui(width, height)
+  , screen(0, 0, width, height)
+  , view(initialView)
+  , dragStart(0, 0)
+  , dragEnd(0, 0)
+  , dragRectangle(sf::Vector2f(0, 0))
+  , dragging(false)
+  {
+    palette.at(palette.size() - 1) = sf::Color::Black;
+    // blended blue color
+    dragRectangle.setFillColor(sf::Color(0x80, 0x80, 0xff, 0x80));
+  }
 
-  gui.updateView(view, palette);
+  ~App() {
+    window.close();
+  }
 
-  sf::Vector2<world_coords_t> newTopLeft(-2, -2);
-  sf::Vector2<world_coords_t> newBottomRight(2, 2);
-  sf::Vector2i dragStart(0, 0);
-  sf::Vector2i dragEnd(0, 0);
-  sf::RectangleShape dragRectangle(sf::Vector2f(0, 0));
-  // blended blue color
-  dragRectangle.setFillColor(sf::Color(0x80, 0x80, 0xff, 0x80));
-  auto mousePressed = false;
-  // while window is open
-  auto done = false;
-  while (!done) {
-    sf::Event event;
-    while (window.pollEvent(event)) {
-      if (event.type == sf::Event::Resized) {
-        const auto s = event.size;
-        // update the view to the new size of the window
-        sf::FloatRect visibleArea(0, 0, s.width, s.height);
-        window.setView(sf::View(visibleArea));
+  void update() {
+    gui.updateView(view, palette);
+  }
 
-        gui.resize(s.width, s.height);
-        screen.width = s.width;
-        screen.height = s.height;
-        gui.updateView(view, palette);
-      }
-      if (event.type == sf::Event::KeyPressed) {
-        if (event.key.code == sf::Keyboard::Key::R) {
-          view = initialView;
-        }
-        const auto step = 4;
-        // move up
-        if (event.key.code == sf::Keyboard::Key::W) {
-          view.top -= view.height / step;
-        }
-        // move down
-        if (event.key.code == sf::Keyboard::Key::S) {
-          view.top += view.height / step;
-        }
-        // move left
-        if (event.key.code == sf::Keyboard::Key::A) {
-          view.left -= view.width / step;
-        }
-        // move right
-        if (event.key.code == sf::Keyboard::Key::D) {
-          view.left += view.width / step;
-        }
-        // zoom in
-        if (event.key.code == sf::Keyboard::Key::Z) {
-          // TODO: work out transforms for this
-          // const auto center = getCenter(view);
-          // const auto t = (view.top - center.y) / 2  - (view.height / 2);
-          // const auto l = view.left + (view.width  / 2);
-          // const auto h = view.height / 2;
-          // const auto w = view.width / 2;
-          // view = sf::FloatRect(l, t, w, h);
-        }
-        if (event.key.code == sf::Keyboard::Escape) {
-          done = true;
-        }
-        gui.updateView(view, palette);
-      }
-      if (event.type == sf::Event::Closed) {
-        done = true;
-      }
-      if (event.type == sf::Event::MouseMoved) {
-        dragEnd = sf::Vector2i(event.mouseMove.x, event.mouseMove.y);
-      }
-      if (event.type == sf::Event::MouseButtonPressed) {
-        mousePressed = true;
-        if (event.mouseButton.button == sf::Mouse::Left) {
-          dragStart = dragEnd = sf::Vector2i(event.mouseButton.x, event.mouseButton.y);
-          newTopLeft = translatePointFromTo(screen, view, dragStart);
-          pointPrintln(std::cout, newTopLeft, "newTopLeft");
-        }
-      }
-      if (event.type == sf::Event::MouseButtonReleased) {
-        mousePressed = false;
-        if (event.mouseButton.button == sf::Mouse::Left) {
-          dragEnd = sf::Vector2i(event.mouseButton.x, event.mouseButton.y);
-          newBottomRight = translatePointFromTo(screen, view, dragEnd);
-          pointPrintln(std::cout, newBottomRight, "newBottomRight");
+  void resizeWindow(unsigned int width, unsigned int height) {
+    // update the view to the new size of the window
+    sf::FloatRect visibleArea(0, 0, width, height);
+    window.setView(sf::View(visibleArea));
 
-          const auto x = std::min(newTopLeft.x, newBottomRight.x);
-          const auto y = std::min(newTopLeft.y, newBottomRight.y);
+    gui.resize(width, height);
+    screen.width = width;
+    screen.height = height;
+    gui.updateView(view, palette);
+  }
 
-          const sf::Vector2<world_coords_t> newDimensions(
-            std::fabs(newBottomRight.x - newTopLeft.x),
-            std::fabs(newBottomRight.y - newTopLeft.y));
-          const sf::Rect<world_coords_t> newView(x, y, newDimensions.x, newDimensions.y);
-          const sf::Vector2<world_coords_t> scaleFactor(view.width / newView.width, view.height / newView.height);
-          view = newView;
-          rectPrintln(std::cout, view, "view");
-          gui.updateView(view, palette);
-        }
-      }
-    }
+  void resetView() {
+    view = initialView;
+  }
+
+  bool pollEvent(sf::Event& event) {
+    return window.pollEvent(event);
+  }
+
+  void moveUp() {
+    const auto step = 4;
+    view.top -= view.height / step;
+  }
+
+  void moveDown() {
+    const auto step = 4;
+    view.top += view.height / step;
+  }
+
+  void moveLeft() {
+    const auto step = 4;
+    view.left -= view.width / step;
+  }
+
+  void moveRight() {
+    const auto step = 4;
+    view.left += view.width / step;
+  }
+
+  void zoomIn()  {
+    // TODO: work out transforms for this
+    // const auto center = getCenter(view);
+    // const auto t = (view.top - center.y) / 2  - (view.height / 2);
+    // const auto l = view.left + (view.width  / 2);
+    // const auto h = view.height / 2;
+    // const auto w = view.width / 2;
+    // view = sf::FloatRect(l, t, w, h);
+  }
+
+  void startDrag(const sf::Vector2i& newDragStart) {
+    dragging = true;
+    dragStart = dragEnd = newDragStart;
+  }
+
+  void endDrag(const sf::Vector2i& newDragEnd) {
+    dragging = false;
+    dragEnd = newDragEnd;
+    auto newTopLeft = translatePointFromTo(screen, view, dragStart);
+    auto newBottomRight = translatePointFromTo(screen, view, dragEnd);
+    pointPrintln(std::cout, newTopLeft, "newTopLeft");
+    pointPrintln(std::cout, newBottomRight, "newBottomRight");
+
+    const auto x = std::min(newTopLeft.x, newBottomRight.x);
+    const auto y = std::min(newTopLeft.y, newBottomRight.y);
+
+    const sf::Vector2<world_coords_t> newDimensions(
+      std::fabs(newBottomRight.x - newTopLeft.x),
+      std::fabs(newBottomRight.y - newTopLeft.y));
+    const sf::Rect<world_coords_t> newView(x, y, newDimensions.x, newDimensions.y);
+    const sf::Vector2<world_coords_t> scaleFactor(view.width / newView.width, view.height / newView.height);
+    view = newView;
+    rectPrintln(std::cout, view, "view");
+    gui.updateView(view, palette);
+  }
+
+  void updateDrag(const sf::Vector2i& newDragEnd) {
+    dragEnd = newDragEnd;
+  }
+  void render() {
     window.clear(sf::Color::White);
     gui.draw(window);
-    if (mousePressed) {
+    if (dragging) {
       dragRectangle.setPosition(sf::Vector2f(dragStart));
       dragRectangle.setSize(sf::Vector2f(dragEnd - dragStart));
       window.draw(dragRectangle);
@@ -252,7 +248,57 @@ int main() {
     }
     window.display();
   }
+private:
+  sf::RenderWindow window;
+  std::vector<sf::Color> palette;
+  Gui gui;
+  sf::IntRect screen;
+  sf::Rect<world_coords_t> view;
+  sf::Vector2i dragStart;
+  sf::Vector2i dragEnd;
+  sf::RectangleShape dragRectangle;
+  bool dragging;
+};
 
-  window.close();
+int main() {
+  const auto width = 1280;
+  const auto height = 960;
+  App app(width, height, 1024 * 2);
+  app.update();
+
+  // while window is open
+  auto done = false;
+  while (!done) {
+    sf::Event event;
+    while (app.pollEvent(event)) {
+      if (event.type == sf::Event::Resized) app.resizeWindow(event.size.width, event.size.height);
+      if (event.type == sf::Event::KeyPressed) {
+        if (event.key.code == sf::Keyboard::Key::R) app.resetView();
+        if (event.key.code == sf::Keyboard::Key::W) app.moveUp();
+        if (event.key.code == sf::Keyboard::Key::S) app.moveDown();
+        if (event.key.code == sf::Keyboard::Key::A) app.moveLeft();
+        if (event.key.code == sf::Keyboard::Key::D) app.moveRight();
+        if (event.key.code == sf::Keyboard::Key::Z) app.zoomIn();
+        if (event.key.code == sf::Keyboard::Escape) done = true;
+        app.update();
+      }
+      if (event.type == sf::Event::Closed) done = true;
+      if (event.type == sf::Event::MouseMoved) {
+        app.updateDrag(sf::Vector2i(event.mouseMove.x, event.mouseMove.y));
+      }
+      if (event.type == sf::Event::MouseButtonPressed) {
+        if (event.mouseButton.button == sf::Mouse::Left) {
+          app.startDrag(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
+        }
+      }
+      if (event.type == sf::Event::MouseButtonReleased) {
+        if (event.mouseButton.button == sf::Mouse::Left) {
+          app.endDrag(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
+        }
+      }
+    }
+    app.render();
+  }
+
   return 0;
 }
