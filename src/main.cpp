@@ -109,7 +109,11 @@ class Gui {
       updateViewTexture(*pixels, *texture, view, palette);
     }
 
-    void swap(Gui& other) {
+    void resize(unsigned int width, unsigned int height) {
+      swap(Gui(width, height));
+    }
+
+    void swap(Gui&& other) {
       pixels.swap(other.pixels);
       texture.swap(other.texture);
       sprite.swap(other.sprite);
@@ -161,8 +165,7 @@ int main() {
         sf::FloatRect visibleArea(0, 0, s.width, s.height);
         window.setView(sf::View(visibleArea));
 
-        Gui tempGui(s.width, s.height);
-        gui.swap(tempGui);
+        gui.resize(s.width, s.height);
         screen.width = s.width;
         screen.height = s.height;
         gui.updateView(view, palette);
