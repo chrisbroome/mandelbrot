@@ -144,6 +144,7 @@ public:
   , dragEnd(0, 0)
   , dragRectangle(sf::Vector2f(0, 0))
   , dragging(false)
+  , viewShouldUpdate(false)
   {
     palette.at(palette.size() - 1) = sf::Color::Black;
     // blended blue color
@@ -155,7 +156,7 @@ public:
   }
 
   void update() {
-    gui.updateView(view, palette);
+    viewShouldUpdate = true;
   }
 
   void resizeWindow(unsigned int width, unsigned int height) {
@@ -166,11 +167,12 @@ public:
     gui.resize(width, height);
     screen.width = width;
     screen.height = height;
-    gui.updateView(view, palette);
+    update();
   }
 
   void resetView() {
     view = initialView;
+    update();
   }
 
   bool pollEvent(sf::Event& event) {
@@ -180,21 +182,25 @@ public:
   void moveUp() {
     const auto step = 4;
     view.top -= view.height / step;
+    update();
   }
 
   void moveDown() {
     const auto step = 4;
     view.top += view.height / step;
+    update();
   }
 
   void moveLeft() {
     const auto step = 4;
     view.left -= view.width / step;
+    update();
   }
 
   void moveRight() {
     const auto step = 4;
     view.left += view.width / step;
+    update();
   }
 
   void zoomIn()  {
@@ -230,14 +236,19 @@ public:
     const sf::Vector2<world_coords_t> scaleFactor(view.width / newView.width, view.height / newView.height);
     view = newView;
     rectPrintln(std::cout, view, "view");
-    gui.updateView(view, palette);
+    update();
   }
 
   void updateDrag(const sf::Vector2i& newDragEnd) {
     dragEnd = newDragEnd;
   }
+
   void render() {
     window.clear(sf::Color::White);
+    if (viewShouldUpdate) {
+      viewShouldUpdate = false;
+      gui.updateView(view, palette);
+    }
     gui.draw(window);
     if (dragging) {
       dragRectangle.setPosition(sf::Vector2f(dragStart));
@@ -248,6 +259,7 @@ public:
     }
     window.display();
   }
+
 private:
   sf::RenderWindow window;
   std::vector<sf::Color> palette;
@@ -258,7 +270,131 @@ private:
   sf::Vector2i dragEnd;
   sf::RectangleShape dragRectangle;
   bool dragging;
+  bool viewShouldUpdate;
 };
+
+class ApplicationEvent {
+public:
+  struct ResizeWindowEvent {
+    unsigned int width;  ///< New width, in pixels
+    unsigned int height; ///< New height, in pixels
+  };
+  struct DragStartEvent {
+    int x;
+    int y;
+  };
+  struct DragUpdateEvent {
+    int x;
+    int y;
+  };
+  struct DragEndEvent {
+    int x;
+    int y;
+  };
+
+  enum EventType {
+    Null,
+    ResizeWindow,
+    ResetView,
+    MoveUp,
+    MoveDown,
+    MoveLeft,
+    MoveRight,
+    ZoomIn,
+    Quit,
+    DragStart,
+    DragUpdate,
+    DragEnd,
+  };
+
+  EventType type;
+
+  union {
+    ResizeWindowEvent size;
+    DragStartEvent    dragStart;
+    DragUpdateEvent   dragUpdate;
+    DragEndEvent      dragEnd;
+  };
+
+  static ApplicationEvent NewResizeWindow(unsigned int width, unsigned int height) {
+    ApplicationEvent evt;
+    evt.type = ApplicationEvent::EventType::ResizeWindow;
+    evt.size = {width, height};
+    return evt;
+  }
+
+  static ApplicationEvent NewDragStart(int x, int y) {
+    ApplicationEvent evt;
+    evt.type = ApplicationEvent::EventType::DragStart;
+    evt.dragStart = {x, y};
+    return evt;
+  }
+
+  static ApplicationEvent NewDragEnd(int x, int y) {
+    ApplicationEvent evt;
+    evt.type = ApplicationEvent::EventType::DragEnd;
+    evt.dragEnd = {x, y};
+    return evt;
+  }
+
+  static ApplicationEvent NewDragUpdate(int x, int y) {
+    ApplicationEvent evt;
+    evt.type = ApplicationEvent::EventType::DragUpdate;
+    evt.dragUpdate = {x, y};
+    return evt;
+  }
+
+  static ApplicationEvent NewReset() {
+    return ApplicationEvent{ApplicationEvent::EventType::ResetView,{}};
+  }
+  static ApplicationEvent NewMoveUp() {
+    return ApplicationEvent{ApplicationEvent::EventType::MoveUp,{}};
+  }
+  static ApplicationEvent NewMoveDown() {
+    return ApplicationEvent{ApplicationEvent::EventType::MoveDown,{}};
+  }
+  static ApplicationEvent NewMoveLeft() {
+    return ApplicationEvent{ApplicationEvent::EventType::MoveLeft,{}};
+  }
+  static ApplicationEvent NewMoveRight() {
+    return ApplicationEvent{ApplicationEvent::EventType::MoveRight,{}};
+  }
+  static ApplicationEvent NewZoomIn() {
+    return ApplicationEvent{ApplicationEvent::EventType::ZoomIn,{}};
+  }
+  static ApplicationEvent NewQuit() {
+    return ApplicationEvent{ApplicationEvent::EventType::Quit,{}};
+  }
+  static ApplicationEvent NewNull() {
+    return ApplicationEvent{ApplicationEvent::EventType::Null, {}};
+  }
+};
+
+ApplicationEvent processInputEvents(const sf::Event& event) {
+  if (event.type == sf::Event::Resized) return ApplicationEvent::NewResizeWindow(event.size.width, event.size.height);
+  if (event.type == sf::Event::KeyPressed) {
+    if (event.key.code == sf::Keyboard::Key::R) return ApplicationEvent::NewReset();
+    if (event.key.code == sf::Keyboard::Key::W) return ApplicationEvent::NewMoveUp();
+    if (event.key.code == sf::Keyboard::Key::S) return ApplicationEvent::NewMoveDown();
+    if (event.key.code == sf::Keyboard::Key::A) return ApplicationEvent::NewMoveLeft();
+    if (event.key.code == sf::Keyboard::Key::D) return ApplicationEvent::NewMoveRight();
+    if (event.key.code == sf::Keyboard::Key::Z) return ApplicationEvent::NewZoomIn();
+    if (event.key.code == sf::Keyboard::Escape) return ApplicationEvent::NewQuit();
+  }
+  if (event.type == sf::Event::Closed) return ApplicationEvent::NewQuit();
+  if (event.type == sf::Event::MouseMoved) return ApplicationEvent::NewDragUpdate(event.mouseMove.x, event.mouseMove.y);
+  if (event.type == sf::Event::MouseButtonPressed) {
+    if (event.mouseButton.button == sf::Mouse::Left) {
+      return ApplicationEvent::NewDragStart(event.mouseButton.x, event.mouseButton.y);
+    }
+  }
+  if (event.type == sf::Event::MouseButtonReleased) {
+    if (event.mouseButton.button == sf::Mouse::Left) {
+      return ApplicationEvent::NewDragEnd(event.mouseButton.x, event.mouseButton.y);
+    }
+  }
+  return ApplicationEvent::NewNull();
+}
 
 int main() {
   const auto width = 1280;
@@ -271,31 +407,18 @@ int main() {
   while (!done) {
     sf::Event event;
     while (app.pollEvent(event)) {
-      if (event.type == sf::Event::Resized) app.resizeWindow(event.size.width, event.size.height);
-      if (event.type == sf::Event::KeyPressed) {
-        if (event.key.code == sf::Keyboard::Key::R) app.resetView();
-        if (event.key.code == sf::Keyboard::Key::W) app.moveUp();
-        if (event.key.code == sf::Keyboard::Key::S) app.moveDown();
-        if (event.key.code == sf::Keyboard::Key::A) app.moveLeft();
-        if (event.key.code == sf::Keyboard::Key::D) app.moveRight();
-        if (event.key.code == sf::Keyboard::Key::Z) app.zoomIn();
-        if (event.key.code == sf::Keyboard::Escape) done = true;
-        app.update();
-      }
-      if (event.type == sf::Event::Closed) done = true;
-      if (event.type == sf::Event::MouseMoved) {
-        app.updateDrag(sf::Vector2i(event.mouseMove.x, event.mouseMove.y));
-      }
-      if (event.type == sf::Event::MouseButtonPressed) {
-        if (event.mouseButton.button == sf::Mouse::Left) {
-          app.startDrag(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
-        }
-      }
-      if (event.type == sf::Event::MouseButtonReleased) {
-        if (event.mouseButton.button == sf::Mouse::Left) {
-          app.endDrag(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
-        }
-      }
+      auto e = processInputEvents(event);
+      if (e.type == ApplicationEvent::Null) {}
+      else if (e.type == ApplicationEvent::ResizeWindow) app.resizeWindow(e.size.width, e.size.height);
+      else if (e.type == ApplicationEvent::ResetView) app.resetView();
+      else if (e.type == ApplicationEvent::MoveUp) app.moveUp();
+      else if (e.type == ApplicationEvent::MoveDown) app.moveDown();
+      else if (e.type == ApplicationEvent::MoveLeft) app.moveLeft();
+      else if (e.type == ApplicationEvent::MoveRight) app.moveRight();
+      else if (e.type == ApplicationEvent::DragStart) app.startDrag(sf::Vector2i(e.dragStart.x, e.dragStart.y));
+      else if (e.type == ApplicationEvent::DragUpdate) app.updateDrag(sf::Vector2i(e.dragUpdate.x, e.dragUpdate.y));
+      else if (e.type == ApplicationEvent::DragEnd) app.endDrag(sf::Vector2i(e.dragEnd.x, e.dragEnd.y));
+      else if (e.type == ApplicationEvent::Quit) done = true;
     }
     app.render();
   }
