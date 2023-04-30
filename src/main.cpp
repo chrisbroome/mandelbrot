@@ -32,7 +32,7 @@ std::vector<sf::Color> loadPalette(const unsigned int maxIterations) {
     Pink    7f   0  7f
     Black    0   0   0
   */
-  const auto grad = std::vector<sf::Color>{
+  const auto grad = std::vector<sf::Color> {
     sf::Color::Red, sf::Color(0xff, 0x7f, 0x00),
     sf::Color::Yellow, sf::Color(0x7f, 0xff, 0x00),
     sf::Color::Green, sf::Color::Blue,
@@ -399,7 +399,7 @@ ApplicationEvent processInputEvents(const sf::Event& event) {
 int main() {
   const auto width = 1280;
   const auto height = 960;
-  App app(width, height, 1024 * 2);
+  App app(width, height, 1024);
   app.update();
 
   // while window is open
