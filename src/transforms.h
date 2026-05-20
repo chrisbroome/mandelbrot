@@ -2,7 +2,10 @@
 #ifndef TRANSFORMS_H
 #define TRANSFORMS_H
 
+#include <atomic>
+#include <cstdint>
 #include <iostream>
+#include <vector>
 
 #include "SFML/Graphics.hpp"
 
@@ -54,24 +57,19 @@ const sf::Vector2<U> translatePointFromTo(const sf::Rect<T> from, const sf::Rect
   return translatedPoint;
 }
 
-template<typename T>
-void updateViewTexture(
-  sf::Image& pixels, sf::Texture& texture, const sf::Rect<T> view,
-  const std::vector<sf::Color>& palette
-) {
-  const auto textureSize = texture.getSize();
-  std::cerr << "updateViewTexture:textureSize:" << "(" << textureSize.x << "," << textureSize.y << ")" << std::endl;
-  sf::Vector2u ti(0, 0);
-  sf::Vector2<T> c(view.position.x, view.position.y);
-  const sf::Vector2<T> cInc(view.size.x / textureSize.x, view.size.y / textureSize.y);
-  for (ti.y = 0, c.y = view.position.y; ti.y < textureSize.y; ++ti.y, c.y += cInc.y) {
-    for (ti.x = 0, c.x = view.position.x; ti.x < textureSize.x; ++ti.x, c.x += cInc.x) {
-      const auto count = mandelbrot(c, palette.size() - 1);
-      pixels.setPixel({ti.x, ti.y}, palette.at(count));
-    }
-  }
-  texture.update(pixels);
-}
+// Compute mandelbrot iterations across a viewport and write RGBA bytes
+// directly to `out` (which must point to at least size.x * size.y * 4 bytes).
+// Returns true if the full image was produced. If `currentJobId` changes away
+// from `myJobId` mid-flight, the function returns false without finishing —
+// the partial contents of `out` should be discarded by the caller.
+bool computeMandelbrotPixels(
+  uint8_t* out,
+  sf::Vector2u size,
+  sf::Rect<long double> view,
+  const std::vector<sf::Color>& palette,
+  uint64_t myJobId,
+  const std::atomic<uint64_t>& currentJobId
+);
 
 template<typename T> unsigned int mandelbrot(const sf::Vector2<T> c, const unsigned int numIterations) {
   if (c.x < -2 || c.x > 2 || c.y < -2 || c.y > 2) return numIterations;

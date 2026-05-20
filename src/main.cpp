@@ -1,10 +1,13 @@
 #include <cmath>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <iostream>
+#include <vector>
 
 #include "SFML/Graphics.hpp"
 
+#include "compute_worker.h"
 #include "gradient.h"
 #include "transforms.h"
 
@@ -67,7 +70,9 @@ std::vector<sf::Color> loadPalette(const unsigned int maxIterations) {
     sf::Color::Magenta, sf::Color(0x7f, 0x00, 0x7f),
   };
 
-  return mbv::gradient::Linear(grad, maxIterations);
+  auto result = mbv::gradient::Linear(grad, maxIterations);
+  if (!result.empty()) result.back() = sf::Color::Black;
+  return result;
 }
 
 class Gui {
@@ -75,13 +80,20 @@ class Gui {
     Gui(unsigned int width, unsigned int height) {
       texture = std::make_unique<sf::Texture>(sf::Vector2u{width, height});
       sprite = std::make_unique<sf::Sprite>(*texture);
-      pixels = std::make_unique<sf::Image>();
-      pixels->resize(texture->getSize());
+      // Initialise to opaque black so the first frames (before the worker has
+      // produced anything) don't show uninitialised GPU memory.
+      std::vector<uint8_t> blackPixels(static_cast<size_t>(width) * height * 4, 0);
+      for (size_t i = 3; i < blackPixels.size(); i += 4) blackPixels[i] = 0xff;
+      texture->update(blackPixels.data());
     }
 
-    template<typename T>
-    void updateView(const sf::Rect<T> view, const std::vector<sf::Color>& palette) {
-      updateViewTexture(*pixels, *texture, view, palette);
+    void uploadPixels(const uint8_t* data, sf::Vector2u size) {
+      if (size != texture->getSize()) return;
+      texture->update(data);
+    }
+
+    sf::Vector2u getSize() const {
+      return texture->getSize();
     }
 
     void resize(unsigned int width, unsigned int height) {
@@ -89,7 +101,6 @@ class Gui {
     }
 
     void swap(Gui&& other) {
-      pixels.swap(other.pixels);
       texture.swap(other.texture);
       sprite.swap(other.sprite);
     }
@@ -101,7 +112,6 @@ class Gui {
   private:
     std::unique_ptr<sf::Texture> texture;
     std::unique_ptr<sf::Sprite> sprite;
-    std::unique_ptr<sf::Image> pixels;
 };
 
 
@@ -119,9 +129,8 @@ public:
   , dragEnd(0, 0)
   , dragRectangle(sf::Vector2f(0, 0))
   , dragging(false)
-  , viewShouldUpdate(false)
+  , worker(palette)
   {
-    palette.at(palette.size() - 1) = sf::Color::Black;
     // blended blue color
     dragRectangle.setFillColor(sf::Color(0x80, 0x80, 0xff, 0x80));
   }
@@ -131,7 +140,7 @@ public:
   }
 
   void update() {
-    viewShouldUpdate = true;
+    worker.submit(view, gui.getSize());
   }
 
   void resizeWindow(unsigned int width, unsigned int height) {
@@ -220,9 +229,8 @@ public:
 
   void render() {
     window.clear(sf::Color::White);
-    if (viewShouldUpdate) {
-      viewShouldUpdate = false;
-      gui.updateView(view, palette);
+    if (auto r = worker.tryTakeResult()) {
+      gui.uploadPixels(r->rgba.data(), r->size);
     }
     gui.draw(window);
     if (dragging) {
@@ -245,7 +253,9 @@ private:
   sf::Vector2i dragEnd;
   sf::RectangleShape dragRectangle;
   bool dragging;
-  bool viewShouldUpdate;
+  // Declared last so it's destroyed first — the worker references `palette`
+  // and joining the thread must complete before `palette` goes away.
+  ComputeWorker worker;
 };
 
 class ApplicationEvent {
