@@ -29,7 +29,7 @@ template<typename T> const sf::Vector2<T> getCenter(const sf::Rect<T> r);
 template<typename T, typename U> sf::Transform getTransformFromTo(const sf::Rect<T> from, const sf::Rect<U> to) {
   const sf::Vector2f viewPoint(1.5, 1.5);
   const sf::Vector2f fromCenter(getCenter(from));
-  const sf::Vector2f scaleFactor(to.width / from.width, to.height / from.height);
+  const sf::Vector2f scaleFactor(to.size.x / from.size.x, to.size.y / from.size.y);
   const sf::Vector2f toCenter(getCenter(to));
   sf::Transform transform;
   transform.translate(-fromCenter).scale(scaleFactor).translate(toCenter);
@@ -47,7 +47,7 @@ const sf::Vector2<U> translatePointFromTo(const sf::Rect<T> from, const sf::Rect
   const sf::Vector2f fc(getCenter(from));
   const sf::Vector2f tc(getCenter(to));
 
-  const sf::Vector2f scaleFactor(to.width / from.width, to.height / from.height);
+  const sf::Vector2f scaleFactor(to.size.x / from.size.x, to.size.y / from.size.y);
   const sf::Vector2<U> translatedPoint((point.x - fc.x) * scaleFactor.x + tc.x,
     (point.y - fc.y) * scaleFactor.y + tc.y
   );
@@ -62,12 +62,12 @@ void updateViewTexture(
   const auto textureSize = texture.getSize();
   std::cerr << "updateViewTexture:textureSize:" << "(" << textureSize.x << "," << textureSize.y << ")" << std::endl;
   sf::Vector2u ti(0, 0);
-  sf::Vector2<T> c(view.left, view.top);
-  const sf::Vector2<T> cInc(view.width / textureSize.x, view.height / textureSize.y);
-  for (ti.y = 0, c.y = view.top; ti.y < textureSize.y; ++ti.y, c.y += cInc.y) {
-    for (ti.x = 0, c.x = view.left; ti.x < textureSize.x; ++ti.x, c.x += cInc.x) {
+  sf::Vector2<T> c(view.position.x, view.position.y);
+  const sf::Vector2<T> cInc(view.size.x / textureSize.x, view.size.y / textureSize.y);
+  for (ti.y = 0, c.y = view.position.y; ti.y < textureSize.y; ++ti.y, c.y += cInc.y) {
+    for (ti.x = 0, c.x = view.position.x; ti.x < textureSize.x; ++ti.x, c.x += cInc.x) {
       const auto count = mandelbrot(c, palette.size() - 1);
-      pixels.setPixel(ti.x, ti.y, palette.at(count));
+      pixels.setPixel({ti.x, ti.y}, palette.at(count));
     }
   }
   texture.update(pixels);
@@ -99,7 +99,7 @@ template<typename T> inline const sf::Vector2<T> mandelbrotIteration(const sf::V
 }
 
 template<typename T> inline const sf::Vector2<T> getCenter(const sf::Rect<T> r) {
-  return sf::Vector2<T>(r.left + r.width / 2, r.top + r.height / 2);
+  return sf::Vector2<T>(r.position.x + r.size.x / 2, r.position.y + r.size.y / 2);
 }
 
 #endif

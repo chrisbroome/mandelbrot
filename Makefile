@@ -1,6 +1,6 @@
 NAME=mandelbrot
 CXX=g++
-CXXFLAGS+=-std=c++14 -Wall -Wextra -Werror -pedantic
+CXXFLAGS+=-std=c++17 -Wall -Wextra -Werror -pedantic
 
 SRCEXT:=.cpp
 OBJEXT:=.o
@@ -28,11 +28,8 @@ else
     LIBRARIES := $(addprefix -l,$(LIBS))
 	endif
 	ifeq ($(UNAME),Darwin)
-	  CXXFLAGS += -D OSX
-		LIBS += SFML
-		FWKDIR := /Library/Frameworks
-		FWKS := $(addprefix -framework ,$(LIBS))
-		LIBRARIES := $(FWKS) -F $(FWKDIR)
+	  CXXFLAGS += -D OSX -I/usr/local/include
+		LIBRARIES := -L/usr/local/lib $(addprefix -l,$(LIBS))
 	endif
 endif
 

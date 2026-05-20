@@ -1,6 +1,6 @@
 #include <cmath>
-#include <exception>
 #include <memory>
+#include <optional>
 #include <iostream>
 
 #include "SFML/Graphics.hpp"
@@ -17,7 +17,7 @@ std::ostream& pointPrintln(std::ostream& out, const sf::Vector2<T>& p, const std
 
 template<typename T>
 std::ostream& rectPrintln(std::ostream& out, const sf::Rect<T>& r, const std::string& name = "") {
-  return out << name << "(" << r.left << ", " << r.top << ") (" << r.width << "," << r.height << ") " << std::endl;
+  return out << name << "(" << r.position.x << ", " << r.position.y << ") (" << r.size.x << "," << r.size.y << ") " << std::endl;
 }
 
 std::vector<sf::Color> loadPalette(const unsigned int maxIterations) {
@@ -70,38 +70,13 @@ std::vector<sf::Color> loadPalette(const unsigned int maxIterations) {
   return mbv::gradient::Linear(grad, maxIterations);
 }
 
-class TextureCreationFailure : public std::exception {
-private:
-  unsigned int width;
-  unsigned int height;
-public:
-  TextureCreationFailure(unsigned int width, unsigned int height) : std::exception()
-  , width(width)
-  , height(height) {}
-
-  const char* what() const noexcept override {
-    return "Error creating texture";
-  }
-
-  unsigned int Width() const {
-    return width;
-  }
-
-  unsigned int Height() const {
-    return height;
-  }
-};
-
 class Gui {
   public:
     Gui(unsigned int width, unsigned int height) {
-      texture = std::make_unique<sf::Texture>();
-      if (!texture->create(width, height)) throw TextureCreationFailure(width, height);
+      texture = std::make_unique<sf::Texture>(sf::Vector2u{width, height});
       sprite = std::make_unique<sf::Sprite>(*texture);
-      const sf::Vector2u textureSize = texture->getSize();
-      sf::IntRect screen(0, 0, textureSize.x, textureSize.y);
       pixels = std::make_unique<sf::Image>();
-      pixels->create(texture->getSize().x, texture->getSize().y);
+      pixels->resize(texture->getSize());
     }
 
     template<typename T>
@@ -130,15 +105,15 @@ class Gui {
 };
 
 
-static sf::Rect<world_coords_t> const initialView(-2, -1.25, 2.5, 2.5);
+static sf::Rect<world_coords_t> const initialView({-2, -1.25}, {2.5, 2.5});
 
 class App {
 public:
   App(unsigned int width, unsigned int height, unsigned int maxIterations)
-  : window(sf::VideoMode(width, height), "Mandelbrot Set Viewer")
+  : window(sf::VideoMode({width, height}), "Mandelbrot Set Viewer")
   , palette(loadPalette(maxIterations))
   , gui(width, height)
-  , screen(0, 0, width, height)
+  , screen({0, 0}, {(int)width, (int)height})
   , view(initialView)
   , dragStart(0, 0)
   , dragEnd(0, 0)
@@ -161,12 +136,12 @@ public:
 
   void resizeWindow(unsigned int width, unsigned int height) {
     // update the view to the new size of the window
-    sf::FloatRect visibleArea(0, 0, width, height);
+    sf::FloatRect visibleArea({0.f, 0.f}, {(float)width, (float)height});
     window.setView(sf::View(visibleArea));
 
     gui.resize(width, height);
-    screen.width = width;
-    screen.height = height;
+    screen.size.x = width;
+    screen.size.y = height;
     update();
   }
 
@@ -175,31 +150,31 @@ public:
     update();
   }
 
-  bool pollEvent(sf::Event& event) {
-    return window.pollEvent(event);
+  std::optional<sf::Event> pollEvent() {
+    return window.pollEvent();
   }
 
   void moveUp() {
     const auto step = 4;
-    view.top -= view.height / step;
+    view.position.y -= view.size.y / step;
     update();
   }
 
   void moveDown() {
     const auto step = 4;
-    view.top += view.height / step;
+    view.position.y += view.size.y / step;
     update();
   }
 
   void moveLeft() {
     const auto step = 4;
-    view.left -= view.width / step;
+    view.position.x -= view.size.x / step;
     update();
   }
 
   void moveRight() {
     const auto step = 4;
-    view.left += view.width / step;
+    view.position.x += view.size.x / step;
     update();
   }
 
@@ -232,8 +207,8 @@ public:
     const sf::Vector2<world_coords_t> newDimensions(
       std::fabs(newBottomRight.x - newTopLeft.x),
       std::fabs(newBottomRight.y - newTopLeft.y));
-    const sf::Rect<world_coords_t> newView(x, y, newDimensions.x, newDimensions.y);
-    const sf::Vector2<world_coords_t> scaleFactor(view.width / newView.width, view.height / newView.height);
+    const sf::Rect<world_coords_t> newView({x, y}, {newDimensions.x, newDimensions.y});
+    const sf::Vector2<world_coords_t> scaleFactor(view.size.x / newView.size.x, view.size.y / newView.size.y);
     view = newView;
     rectPrintln(std::cout, view, "view");
     update();
@@ -371,27 +346,27 @@ public:
 };
 
 ApplicationEvent processInputEvents(const sf::Event& event) {
-  if (event.type == sf::Event::Resized) return ApplicationEvent::NewResizeWindow(event.size.width, event.size.height);
-  if (event.type == sf::Event::KeyPressed) {
-    if (event.key.code == sf::Keyboard::Key::R) return ApplicationEvent::NewReset();
-    if (event.key.code == sf::Keyboard::Key::W) return ApplicationEvent::NewMoveUp();
-    if (event.key.code == sf::Keyboard::Key::S) return ApplicationEvent::NewMoveDown();
-    if (event.key.code == sf::Keyboard::Key::A) return ApplicationEvent::NewMoveLeft();
-    if (event.key.code == sf::Keyboard::Key::D) return ApplicationEvent::NewMoveRight();
-    if (event.key.code == sf::Keyboard::Key::Z) return ApplicationEvent::NewZoomIn();
-    if (event.key.code == sf::Keyboard::Escape) return ApplicationEvent::NewQuit();
+  if (const auto* e = event.getIf<sf::Event::Resized>())
+    return ApplicationEvent::NewResizeWindow(e->size.x, e->size.y);
+  if (const auto* e = event.getIf<sf::Event::KeyPressed>()) {
+    if (e->code == sf::Keyboard::Key::R) return ApplicationEvent::NewReset();
+    if (e->code == sf::Keyboard::Key::W) return ApplicationEvent::NewMoveUp();
+    if (e->code == sf::Keyboard::Key::S) return ApplicationEvent::NewMoveDown();
+    if (e->code == sf::Keyboard::Key::A) return ApplicationEvent::NewMoveLeft();
+    if (e->code == sf::Keyboard::Key::D) return ApplicationEvent::NewMoveRight();
+    if (e->code == sf::Keyboard::Key::Z) return ApplicationEvent::NewZoomIn();
+    if (e->code == sf::Keyboard::Key::Escape) return ApplicationEvent::NewQuit();
   }
-  if (event.type == sf::Event::Closed) return ApplicationEvent::NewQuit();
-  if (event.type == sf::Event::MouseMoved) return ApplicationEvent::NewDragUpdate(event.mouseMove.x, event.mouseMove.y);
-  if (event.type == sf::Event::MouseButtonPressed) {
-    if (event.mouseButton.button == sf::Mouse::Left) {
-      return ApplicationEvent::NewDragStart(event.mouseButton.x, event.mouseButton.y);
-    }
+  if (event.is<sf::Event::Closed>()) return ApplicationEvent::NewQuit();
+  if (const auto* e = event.getIf<sf::Event::MouseMoved>())
+    return ApplicationEvent::NewDragUpdate(e->position.x, e->position.y);
+  if (const auto* e = event.getIf<sf::Event::MouseButtonPressed>()) {
+    if (e->button == sf::Mouse::Button::Left)
+      return ApplicationEvent::NewDragStart(e->position.x, e->position.y);
   }
-  if (event.type == sf::Event::MouseButtonReleased) {
-    if (event.mouseButton.button == sf::Mouse::Left) {
-      return ApplicationEvent::NewDragEnd(event.mouseButton.x, event.mouseButton.y);
-    }
+  if (const auto* e = event.getIf<sf::Event::MouseButtonReleased>()) {
+    if (e->button == sf::Mouse::Button::Left)
+      return ApplicationEvent::NewDragEnd(e->position.x, e->position.y);
   }
   return ApplicationEvent::NewNull();
 }
@@ -405,9 +380,8 @@ int main() {
   // while window is open
   auto done = false;
   while (!done) {
-    sf::Event event;
-    while (app.pollEvent(event)) {
-      auto e = processInputEvents(event);
+    while (const auto event = app.pollEvent()) {
+      auto e = processInputEvents(*event);
       if (e.type == ApplicationEvent::Null) {}
       else if (e.type == ApplicationEvent::ResizeWindow) app.resizeWindow(e.size.width, e.size.height);
       else if (e.type == ApplicationEvent::ResetView) app.resetView();
